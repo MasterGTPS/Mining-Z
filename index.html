@@ -1,44 +1,366 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Mining Clicker Gacha Game</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-  <script src="firebase-config.js"></script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mining Clicker Game</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#222; color:#eee; margin:0; padding:10px;}
+  #game, #login-section { max-width: 600px; margin: auto; }
+  button { padding:10px 20px; margin: 5px; font-size: 16px; }
+  #inventory, #shop, #leaderboard, #chat { margin-top:20px; background:#333; padding:10px; border-radius: 5px; }
+  input { padding:8px; margin:5px 0; width: 100%; }
+  #chat-messages { height: 150px; overflow-y: scroll; background:#111; padding:10px; border-radius:5px; color:#0f0; }
+</style>
 </head>
 <body>
 
-  <div id="auth-section">
-    <h2>Register / Login</h2>
-    <input type="text" id="username" placeholder="Username" />
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button id="btn-register">Register</button>
-    <button id="btn-login">Login</button>
-  </div>
+<div id="login-section">
+  <h2>Login / Register</h2>
+  <input type="email" id="email" placeholder="Email" />
+  <input type="password" id="password" placeholder="Password" />
+  <button id="btn-login">Login</button>
+  <button id="btn-register">Register</button>
+  <p id="login-msg"></p>
+</div>
 
-  <div id="game-section" style="display:none;">
-    <h1>Welcome, <span id="user-display"></span></h1>
-    <div id="coins">Coins: 0</div>
-    <button id="btn-mine">Mine +1 Coin</button>
-    <button id="btn-start-auto">Start Auto Mining</button>
-    <button id="btn-stop-auto" style="display:none;">Stop Auto Mining</button>
-    <button id="btn-gacha">Gacha (Cost: 1000 Coins)</button>
-    <div id="gacha-result"></div>
+<div id="game" style="display:none;">
+  <h2>Mining Clicker Game</h2>
+  <p>Koin: <span id="coin">0</span> | Level: <span id="level">1</span> | XP: <span id="xp">0</span></p>
+  <button id="btn-mine">Mine (+10 coins)</button>
+  <button id="btn-gacha">Gacha (1000 coins)</button>
+  <button id="btn-daily">Claim Daily Reward</button>
 
+  <div id="inventory">
     <h3>Inventory</h3>
-    <div id="inventory"></div>
-
-    <h3>Leaderboard</h3>
-    <div id="leaderboard"><ul></ul></div>
-
-    <button id="btn-logout">Logout</button>
+    <ul id="inventory-list"></ul>
   </div>
 
-  <script src="app.js"></script>
+  <div id="shop">
+    <h3>Shop (Upgrade Mining)</h3>
+    <button id="btn-upgrade">Upgrade Pickaxe (Cost: 500 coins)</button>
+    <p id="shop-msg"></p>
+  </div>
+
+  <div id="leaderboard">
+    <h3>Leaderboard</h3>
+    <ol id="leaderboard-list"></ol>
+  </div>
+
+  <div id="chat">
+    <h3>Chat Room</h3>
+    <div id="chat-messages"></div>
+    <input type="text" id="chat-input" placeholder="Type a message" />
+    <button id="btn-send-chat">Send</button>
+  </div>
+
+  <button id="btn-logout">Logout</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+// TODO: Ganti config Firebase dengan milik kamu
+const firebaseConfig = {
+  apiKey: "AIzaSyCKzrGb2iTb4QIA14pFujCf7j0TMFcf9D0",
+  authDomain: "mining-zz.firebaseapp.com",
+  databaseURL: "https://mining-zz-default-rtdb.firebaseio.com",
+  projectId: "mining-zz",
+  storageBucket: "mining-zz.firebasestorage.app",
+  messagingSenderId: "751992950328",
+  appId: "1:751992950328:web:2323b47fcc3dc6c6a6a0cd",
+  measurementId: "G-7JR5CKV56S"
+};
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.database();
+const firestore = firebase.firestore();
+
+let currentUser = null;
+let userData = {
+  coins: 0,
+  level: 1,
+  xp: 0,
+  inventory: [],
+  pickaxeLevel: 1,
+  lastDaily: 0
+};
+
+const coinElem = document.getElementById('coin');
+const levelElem = document.getElementById('level');
+const xpElem = document.getElementById('xp');
+const inventoryList = document.getElementById('inventory-list');
+const leaderboardList = document.getElementById('leaderboard-list');
+const chatMessages = document.getElementById('chat-messages');
+const loginSection = document.getElementById('login-section');
+const gameSection = document.getElementById('game');
+const loginMsg = document.getElementById('login-msg');
+const shopMsg = document.getElementById('shop-msg');
+
+function updateUI() {
+  coinElem.textContent = userData.coins;
+  levelElem.textContent = userData.level;
+  xpElem.textContent = userData.xp;
+  // Update inventory list
+  inventoryList.innerHTML = '';
+  userData.inventory.forEach((item, idx) => {
+    const li = document.createElement('li');
+    li.textContent = `${item.name} x${item.count}`;
+    inventoryList.appendChild(li);
+  });
+}
+
+// Level system simple, naik level tiap 100 XP
+function checkLevelUp() {
+  const neededXP = userData.level * 100;
+  if (userData.xp >= neededXP) {
+    userData.level++;
+    userData.xp -= neededXP;
+    shopMsg.textContent = `Congrats! You reached level ${userData.level}!`;
+    saveUserData();
+    updateUI();
+  }
+}
+
+function saveUserData() {
+  if (!currentUser) return;
+  db.ref('users/' + currentUser.uid).set(userData);
+  updateLeaderboard();
+}
+
+function loadUserData(uid) {
+  db.ref('users/' + uid).once('value').then(snapshot => {
+    if (snapshot.exists()) {
+      userData = snapshot.val();
+    }
+    updateUI();
+  });
+}
+
+function updateLeaderboard() {
+  if (!currentUser) return;
+  firestore.collection('leaderboard').doc(currentUser.uid).set({
+    username: currentUser.email,
+    coins: userData.coins,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  loadLeaderboard();
+}
+
+function loadLeaderboard() {
+  firestore.collection('leaderboard')
+    .orderBy('coins', 'desc').limit(10).get().then(snapshot => {
+      leaderboardList.innerHTML = '';
+      snapshot.forEach(doc => {
+        const data = doc.data();
+        const li = document.createElement('li');
+        li.textContent = `${data.username}: ${data.coins} coins`;
+        leaderboardList.appendChild(li);
+      });
+    });
+}
+
+function addItemToInventory(itemName) {
+  const found = userData.inventory.find(i => i.name === itemName);
+  if (found) {
+    found.count++;
+  } else {
+    userData.inventory.push({name: itemName, count: 1});
+  }
+  saveUserData();
+  updateUI();
+}
+
+function randomGachaItem() {
+  const items = [
+    "Diamond Pickaxe",
+    "Golden Shovel",
+    "Silver Helmet",
+    "Magic Potion",
+    "Rare Gem",
+    "Epic Sword",
+    "Ancient Relic",
+    "Mystic Scroll",
+    "Energy Drink",
+    "Lucky Charm"
+  ];
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+function canClaimDaily() {
+  const now = Date.now();
+  const oneDay = 24 * 60 * 60 * 1000;
+  return (now - userData.lastDaily) > oneDay;
+}
+
+function claimDaily() {
+  if (canClaimDaily()) {
+    userData.coins += 500;
+    userData.lastDaily = Date.now();
+    shopMsg.textContent = "Daily reward claimed: 500 coins!";
+    saveUserData();
+    updateUI();
+  } else {
+    shopMsg.textContent = "You already claimed your daily reward.";
+  }
+}
+
+function sendMessage(message) {
+  if (!currentUser) return;
+  const chatRef = db.ref('chat');
+  const newMsgRef = chatRef.push();
+  newMsgRef.set({
+    user: currentUser.email,
+    message,
+    timestamp: Date.now()
+  });
+}
+
+function loadChatMessages() {
+  const chatRef = db.ref('chat').limitToLast(50);
+  chatRef.on('child_added', snapshot => {
+    const data = snapshot.val();
+    const msgElem = document.createElement('div');
+    msgElem.textContent = `${data.user}: ${data.message}`;
+    chatMessages.appendChild(msgElem);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
+
+document.getElementById('btn-login').onclick = () => {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  auth.signInWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      currentUser = userCredential.user;
+      loginSection.style.display = 'none';
+      gameSection.style.display = 'block';
+      loadUserData(currentUser.uid);
+      loadLeaderboard();
+      loadChatMessages();
+      loginMsg.textContent = '';
+      shopMsg.textContent = '';
+    })
+    .catch(e => loginMsg.textContent = 'Login error: ' + e.message);
+};
+
+document.getElementById('btn-register').onclick = () => {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  auth.createUserWithEmailAndPassword(email, password)
+    .then(userCredential => {
+      currentUser = userCredential.user;
+      userData = {
+        coins: 0,
+        level: 1,
+        xp: 0,
+        inventory: [],
+        pickaxeLevel: 1,
+        lastDaily: 0
+      };
+      saveUserData();
+      loginSection.style.display = 'none';
+      gameSection.style.display = 'block';
+      loadLeaderboard();
+      loadChatMessages();
+      loginMsg.textContent = '';
+      shopMsg.textContent = '';
+    })
+    .catch(e => loginMsg.textContent = 'Register error: ' + e.message);
+};
+
+document.getElementById('btn-mine').onclick = () => {
+  const baseMining = 10;
+  const upgradeBonus = userData.pickaxeLevel * 5;
+  const total = baseMining + upgradeBonus;
+  userData.coins += total;
+  userData.xp += 10;
+  shopMsg.textContent = `You mined ${total} coins!`;
+  checkLevelUp();
+  saveUserData();
+  updateUI();
+};
+
+document.getElementById('btn-gacha').onclick = () => {
+  if (userData.coins < 1000) {
+    shopMsg.textContent = "Not enough coins for gacha (need 1000).";
+    return;
+  }
+  userData.coins -= 1000;
+  const newItem = randomGachaItem();
+  addItemToInventory(newItem);
+  shopMsg.textContent = `You got: ${newItem} from gacha!`;
+  saveUserData();
+  updateUI();
+};
+
+document.getElementById('btn-upgrade').onclick = () => {
+  const cost = 500 * userData.pickaxeLevel;
+  if (userData.coins < cost) {
+    shopMsg.textContent = `Not enough coins to upgrade pickaxe (cost: ${cost}).`;
+    return;
+  }
+  userData.coins -= cost;
+  userData.pickaxeLevel++;
+  shopMsg.textContent = `Pickaxe upgraded to level ${userData.pickaxeLevel}!`;
+  saveUserData();
+  updateUI();
+};
+
+document.getElementById('btn-daily').onclick = () => {
+  claimDaily();
+};
+
+document.getElementById('btn-send-chat').onclick = () => {
+  const msgInput = document.getElementById('chat-input');
+  const msg = msgInput.value.trim();
+  if (msg) {
+    sendMessage(msg);
+    msgInput.value = '';
+  }
+};
+
+document.getElementById('btn-logout').onclick = () => {
+  auth.signOut().then(() => {
+    currentUser = null;
+    userData = {
+      coins: 0,
+      level: 1,
+      xp: 0,
+      inventory: [],
+      pickaxeLevel: 1,
+      lastDaily: 0
+    };
+    loginSection.style.display = 'block';
+    gameSection.style.display = 'none';
+    loginMsg.textContent = '';
+    shopMsg.textContent = '';
+    inventoryList.innerHTML = '';
+    leaderboardList.innerHTML = '';
+    chatMessages.innerHTML = '';
+  });
+};
+
+// Auto logout if no user
+auth.onAuthStateChanged(user => {
+  if (user) {
+    currentUser = user;
+    loginSection.style.display = 'none';
+    gameSection.style.display = 'block';
+    loadUserData(user.uid);
+    loadLeaderboard();
+    loadChatMessages();
+  } else {
+    currentUser = null;
+    loginSection.style.display = 'block';
+    gameSection.style.display = 'none';
+  }
+});
+</script>
+
 </body>
 </html>
