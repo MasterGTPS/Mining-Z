@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Mining Gacha Leaderboard Firebase</title>
+  <title>Mining Gacha dengan Login Google</title>
   <style>
     body { background: #121212; color: #eee; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
     input, button { padding: 10px; margin: 5px; border-radius: 5px; border: none; }
@@ -11,34 +11,39 @@
     th, td { padding: 10px; border: 1px solid #444; }
     th { background: #282828; }
   </style>
+
+  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-  <h1>Mining & Gacha dengan Leaderboard</h1>
+  <h1>Mining & Gacha dengan Login Google</h1>
+
   <div id="loginDiv">
-    <input type="text" id="username" placeholder="Masukkan nickname" />
-    <button onclick="login()">Login</button>
+    <button onclick="googleLogin()">Login dengan Google</button>
   </div>
 
   <div id="gameDiv" style="display:none;">
-    <p>Halo, <span id="userNameDisplay"></span>! Coin kamu: <span id="coinDisplay">0</span></p>
+    <p>Halo, <span id="userNameDisplay"></span>! Coin kamu: <span id="coinDisplay">0</span> | Level: <span id="levelDisplay">1</span> | XP: <span id="xpDisplay">0</span></p>
     <button onclick="mine()">⛏️ Mining</button>
-    <button onclick="spinGacha()">🎰 Spin Gacha</button>
+    <button onclick="spinGacha()">🎰 Spin Gacha (1k coin)</button>
     <button onclick="useItem()">🎁 Pakai Item</button>
     <p id="spinResult"></p>
     <p id="inventory"></p>
 
     <h2>Leaderboard</h2>
     <table id="leaderboardTable">
-      <thead><tr><th>No</th><th>Nama</th><th>Coin</th></tr></thead>
+      <thead><tr><th>No</th><th>Nama</th><th>Coin</th><th>Level</th></tr></thead>
       <tbody></tbody>
     </table>
+
+    <button onclick="logout()">Logout</button>
   </div>
 
 <script>
-  // Ganti isi firebaseConfig ini dengan config dari Firebase kamu
+  // Ganti dengan config Firebase kamu sendiri ya
   const firebaseConfig = {
     apiKey: "AIzaSyASee7XY4Kjjr_rtPTUGAqOntjPkldG5S4",
   authDomain: "mining-gacha-web.firebaseapp.com",
@@ -50,82 +55,116 @@
   measurementId: "G-LF6SQS0TXH"
   };
 
-  // Initialize Firebase
   firebase.initializeApp(firebaseConfig);
+
+  const auth = firebase.auth();
   const db = firebase.database();
 
   let currentUser = null;
+  let coins = 0;
+  let level = 1;
+  let xp = 0;
   let inventory = [];
   let doubleCoinActive = false;
 
-  function login() {
-    const username = document.getElementById("username").value.trim();
-    if (!username) {
-      alert("Tolong isi nickname dulu ya!");
-      return;
-    }
-    currentUser = username;
-    document.getElementById("loginDiv").style.display = "none";
-    document.getElementById("gameDiv").style.display = "block";
-    document.getElementById("userNameDisplay").innerText = currentUser;
+  function googleLogin() {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    auth.signInWithPopup(provider)
+      .then((result) => {
+        const user = result.user;
+        currentUser = user.uid;
+        const userName = user.displayName || "User";
+        document.getElementById("userNameDisplay").innerText = userName;
 
-    db.ref("users/" + currentUser).once("value", snapshot => {
-      if (snapshot.exists()) {
-        const data = snapshot.val();
-        inventory = data.inventory || [];
-        doubleCoinActive = false;
-        updateInventory();
-        updateCoinDisplay(data.coins || 0);
-      } else {
-        db.ref("users/" + currentUser).set({ coins: 0, inventory: [] });
-        updateCoinDisplay(0);
-        inventory = [];
-        updateInventory();
-      }
-    });
+        // Sembunyikan login, tampilkan game
+        document.getElementById("loginDiv").style.display = "none";
+        document.getElementById("gameDiv").style.display = "block";
 
-    db.ref("users").on("value", snapshot => {
-      const users = snapshot.val();
-      if (!users) return;
-      let leaderboard = [];
-      for (const user in users) {
-        leaderboard.push({ name: user, coins: users[user].coins || 0 });
-      }
-      leaderboard.sort((a,b) => b.coins - a.coins);
-      renderLeaderboard(leaderboard);
+        // Ambil data user dari database
+        db.ref("users/" + currentUser).once("value", snapshot => {
+          if (!snapshot.exists()) {
+            // Buat data baru kalau belum ada
+            db.ref("users/" + currentUser).set({
+              name: userName,
+              coins: 0,
+              level: 1,
+              xp: 0,
+              inventory: []
+            });
+            coins = 0; level = 1; xp = 0; inventory = [];
+          } else {
+            const data = snapshot.val();
+            coins = data.coins || 0;
+            level = data.level || 1;
+            xp = data.xp || 0;
+            inventory = data.inventory || [];
+          }
+          updateUI();
+        });
+
+        listenLeaderboard();
+
+      })
+      .catch((error) => {
+        alert("Login gagal: " + error.message);
+      });
+  }
+
+  function logout() {
+    auth.signOut().then(() => {
+      location.reload();
     });
   }
 
-  function updateCoinDisplay(coin) {
-    document.getElementById("coinDisplay").innerText = coin;
-  }
-
-  function updateInventory() {
+  function updateUI() {
+    document.getElementById("coinDisplay").innerText = coins;
+    document.getElementById("levelDisplay").innerText = level;
+    document.getElementById("xpDisplay").innerText = xp;
     document.getElementById("inventory").innerText = "Inventory: " + (inventory.join(", ") || "Kosong");
   }
 
-  function saveUserData(coins) {
+  function saveUserData() {
+    if (!currentUser) return;
     db.ref("users/" + currentUser).set({
-      coins: coins,
-      inventory: inventory
+      name: document.getElementById("userNameDisplay").innerText,
+      coins,
+      level,
+      xp,
+      inventory
     });
   }
 
   function mine() {
     if (!currentUser) return;
     let earned = Math.floor(Math.random() * 10) + 1;
-    if (doubleCoinActive) earned *= 2;
-    db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
-      let currentCoins = snapshot.val() || 0;
-      currentCoins += earned;
-      updateCoinDisplay(currentCoins);
-      saveUserData(currentCoins);
-      alert(`Kamu mendapatkan ${earned} coin dari mining!`);
-    });
+    if (doubleCoinActive) {
+      earned *= 2;
+      doubleCoinActive = false;
+      alert("Double Coin sudah dipakai!");
+    }
+    coins += earned;
+    xp += earned;
+
+    while (xp >= 100) {
+      xp -= 100;
+      level++;
+      alert(`Level Up! Kamu sekarang level ${level}`);
+    }
+
+    updateUI();
+    saveUserData();
+    alert(`Kamu mendapatkan ${earned} coin dari mining!`);
   }
 
   function spinGacha() {
     if (!currentUser) return;
+    if (coins < 1000) {
+      alert("Koin tidak cukup untuk spin gacha (butuh 1000 coin)");
+      return;
+    }
+    coins -= 1000;
+    updateUI();
+
     const rewards = [
       {text: "🎉 10 Coin", type: "coin", value: 10},
       {text: "💰 20 Coin", type: "coin", value: 20},
@@ -138,20 +177,16 @@
     document.getElementById("spinResult").innerText = `Hasil: ${result.text}`;
 
     if (result.type === "coin") {
-      db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
-        let currentCoins = snapshot.val() || 0;
-        currentCoins += result.value;
-        updateCoinDisplay(currentCoins);
-        saveUserData(currentCoins);
-      });
+      coins += result.value;
     } else if (result.type === "item") {
       inventory.push(result.value);
-      updateInventory();
-      db.ref("users/" + currentUser + "/inventory").set(inventory);
+      updateUI();
     }
+    saveUserData();
   }
 
   function useItem() {
+    if (!currentUser) return;
     if (inventory.length === 0) {
       alert("Belum ada item!");
       return;
@@ -159,17 +194,30 @@
     const item = inventory.shift();
     if (item === "Double Coin") {
       doubleCoinActive = true;
-      alert("Double Coin Aktif untuk mining berikutnya!");
+      alert("Double Coin aktif untuk mining berikutnya!");
     } else if (item === "Bonus 100") {
-      db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
-        let currentCoins = snapshot.val() || 0;
-        currentCoins += 100;
-        updateCoinDisplay(currentCoins);
-        saveUserData(currentCoins);
-      });
+      coins += 100;
+      alert("Bonus 100 coin dari item!");
     }
-    updateInventory();
-    db.ref("users/" + currentUser + "/inventory").set(inventory);
+    updateUI();
+    saveUserData();
+  }
+
+  function listenLeaderboard() {
+    db.ref("users").on("value", snapshot => {
+      const users = snapshot.val();
+      if (!users) return;
+      let leaderboard = [];
+      for (const uid in users) {
+        leaderboard.push({
+          name: users[uid].name || "User",
+          coins: users[uid].coins || 0,
+          level: users[uid].level || 1
+        });
+      }
+      leaderboard.sort((a, b) => b.coins - a.coins);
+      renderLeaderboard(leaderboard);
+    });
   }
 
   function renderLeaderboard(list) {
@@ -177,11 +225,4 @@
     tbody.innerHTML = "";
     list.forEach((user, i) => {
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${i+1}</td><td>${user.name}</td><td>${user.coins}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-</script>
-
-</body>
-</html>
+      tr.innerHTML = `<td>${i+1}</
