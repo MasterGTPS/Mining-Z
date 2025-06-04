@@ -2,36 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Mining Gacha Game</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mining Clicker Gacha Game</title>
   <link rel="stylesheet" href="style.css" />
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
 </head>
 <body>
 
-<div id="auth-section">
-  <h2>Register / Login</h2>
-  <input type="text" id="username" placeholder="Username" /><br/>
-  <input type="email" id="email" placeholder="Email" /><br/>
-  <input type="password" id="password" placeholder="Password" /><br/>
-  <button id="btn-register">Register</button>
-  <button id="btn-login">Login</button>
-</div>
+  <div id="auth-section">
+    <h2>Register / Login</h2>
+    <input type="text" id="username" placeholder="Username" />
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button id="btn-register">Register</button>
+    <button id="btn-login">Login</button>
+  </div>
 
-<div id="game-section" style="display:none;">
-  <h1>Welcome, <span id="display-username"></span></h1>
-  <div>Coins: <span id="coins">0</span></div>
-  <button id="btn-mine">Mine Coin</button>
-  <button id="btn-spin">Spin Gacha (1000 coin)</button>
+  <div id="game-section" style="display:none;">
+    <h1>Welcome, <span id="user-display"></span></h1>
+    <div id="coins">Coins: 0</div>
+    <button id="btn-mine">Mine +1 Coin</button>
+    <button id="btn-start-auto">Start Auto Mining</button>
+    <button id="btn-stop-auto" style="display:none;">Stop Auto Mining</button>
+    <button id="btn-gacha">Gacha (Cost: 1000 Coins)</button>
+    <div id="gacha-result"></div>
 
-  <div id="gacha-result"></div>
-  <div id="inventory"></div>
-  <button id="btn-logout">Logout</button>
-</div>
+    <h3>Inventory</h3>
+    <div id="inventory"></div>
 
-<script src="firebase-config.js"></script>
-<script src="app.js"></script>
+    <h3>Leaderboard</h3>
+    <div id="leaderboard"><ul></ul></div>
+
+    <button id="btn-logout">Logout</button>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
