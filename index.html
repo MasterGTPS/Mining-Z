@@ -1,71 +1,131 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mining Clicker Game</title>
+<title>Zufa Mining Clicker - Full Features</title>
 <style>
-  body { font-family: Arial, sans-serif; background:#222; color:#eee; margin:0; padding:10px;}
-  #game, #login-section { max-width: 600px; margin: auto; }
-  button { padding:10px 20px; margin: 5px; font-size: 16px; }
-  #inventory, #shop, #leaderboard, #chat { margin-top:20px; background:#333; padding:10px; border-radius: 5px; }
-  input { padding:8px; margin:5px 0; width: 100%; }
-  #chat-messages { height: 150px; overflow-y: scroll; background:#111; padding:10px; border-radius:5px; color:#0f0; }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1f1c2c, #928dab);
+    color: #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  h1 {
+    margin: 20px 0 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+  }
+  #auth, #game {
+    background: rgba(0,0,0,0.6);
+    border-radius: 15px;
+    padding: 20px 30px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.5);
+    width: 320px;
+  }
+  input {
+    width: 100%;
+    margin: 10px 0;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: none;
+    font-size: 16px;
+  }
+  button {
+    margin: 10px 5px 0 0;
+    padding: 12px 18px;
+    border: none;
+    border-radius: 10px;
+    background: #4caf50;
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s ease;
+  }
+  button:hover {
+    background: #66bb6a;
+  }
+  #coins, #playername {
+    font-weight: 700;
+    color: #ffea00;
+  }
+  .btn-secondary {
+    background: #2196f3;
+  }
+  .btn-secondary:hover {
+    background: #42a5f5;
+  }
+  #inventory, #leaderboard, #log, #shop, #dailyreward, #spinwheel, #quests, #achievements {
+    margin-top: 20px;
+    background: rgba(255 255 255 / 0.1);
+    padding: 12px;
+    border-radius: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 14px;
+  }
+  .item {
+    background: rgba(255 255 255 / 0.2);
+    margin: 4px 0;
+    padding: 6px 10px;
+    border-radius: 8px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .item .name {
+    font-weight: 600;
+  }
+  .item .qty {
+    font-style: italic;
+    color: #ffeb3b;
+  }
+  #log {
+    height: 120px;
+    overflow-y: scroll;
+    font-family: monospace;
+    background: #222;
+    color: #eee;
+  }
 </style>
 </head>
 <body>
+  <h1>⚒️ Zufa Mining Clicker ⚒️</h1>
 
-<div id="login-section">
-  <h2>Login / Register</h2>
-  <input type="email" id="email" placeholder="Email" />
-  <input type="password" id="password" placeholder="Password" />
-  <button id="btn-login">Login</button>
-  <button id="btn-register">Register</button>
-  <p id="login-msg"></p>
-</div>
-
-<div id="game" style="display:none;">
-  <h2>Mining Clicker Game</h2>
-  <p>Koin: <span id="coin">0</span> | Level: <span id="level">1</span> | XP: <span id="xp">0</span></p>
-  <button id="btn-mine">Mine (+10 coins)</button>
-  <button id="btn-gacha">Gacha (1000 coins)</button>
-  <button id="btn-daily">Claim Daily Reward</button>
-
-  <div id="inventory">
-    <h3>Inventory</h3>
-    <ul id="inventory-list"></ul>
+  <div id="auth">
+    <input type="text" id="username" placeholder="Username" autocomplete="off" />
+    <input type="password" id="password" placeholder="Password" autocomplete="off" />
+    <div>
+      <button onclick="register()">Register</button>
+      <button onclick="login()">Login</button>
+    </div>
   </div>
 
-  <div id="shop">
-    <h3>Shop (Upgrade Mining)</h3>
-    <button id="btn-upgrade">Upgrade Pickaxe (Cost: 500 coins)</button>
-    <p id="shop-msg"></p>
+  <div id="game" style="display:none;">
+    <h2>Welcome, <span id="playername"></span>!</h2>
+    <h3>Coins: <span id="coins">0</span></h3>
+    <button onclick="mine()" class="btn-secondary">Mine ⛏️</button>
+    <button onclick="gacha()" class="btn-secondary">Gacha 🎁 (Cost: 1000 coins)</button>
+    <button onclick="spinWheel()" class="btn-secondary">Spin Wheel 🎡</button>
+    <button onclick="claimDaily()" class="btn-secondary">Daily Reward 🎁</button>
+
+    <div id="inventory" style="margin-top:15px;"></div>
+    <div id="shop" style="margin-top:15px;"></div>
+    <div id="quests" style="margin-top:15px;"></div>
+    <div id="achievements" style="margin-top:15px;"></div>
+    <div id="leaderboard" style="margin-top:15px;"></div>
+    <div id="log"></div>
   </div>
 
-  <div id="leaderboard">
-    <h3>Leaderboard</h3>
-    <ol id="leaderboard-list"></ol>
-  </div>
-
-  <div id="chat">
-    <h3>Chat Room</h3>
-    <div id="chat-messages"></div>
-    <input type="text" id="chat-input" placeholder="Type a message" />
-    <button id="btn-send-chat">Send</button>
-  </div>
-
-  <button id="btn-logout">Logout</button>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
-<script>
-// TODO: Ganti config Firebase dengan milik kamu
-const firebaseConfig = {
-  apiKey: "AIzaSyCKzrGb2iTb4QIA14pFujCf7j0TMFcf9D0",
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script>
+    // CONFIG: isi dengan data Firebase kamu
+    const firebaseConfig = {
+      apiKey: "AIzaSyCKzrGb2iTb4QIA14pFujCf7j0TMFcf9D0",
   authDomain: "mining-zz.firebaseapp.com",
   databaseURL: "https://mining-zz-default-rtdb.firebaseio.com",
   projectId: "mining-zz",
@@ -73,294 +133,121 @@ const firebaseConfig = {
   messagingSenderId: "751992950328",
   appId: "1:751992950328:web:2323b47fcc3dc6c6a6a0cd",
   measurementId: "G-7JR5CKV56S"
-};
-firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.database();
-const firestore = firebase.firestore();
-
-let currentUser = null;
-let userData = {
-  coins: 0,
-  level: 1,
-  xp: 0,
-  inventory: [],
-  pickaxeLevel: 1,
-  lastDaily: 0
-};
-
-const coinElem = document.getElementById('coin');
-const levelElem = document.getElementById('level');
-const xpElem = document.getElementById('xp');
-const inventoryList = document.getElementById('inventory-list');
-const leaderboardList = document.getElementById('leaderboard-list');
-const chatMessages = document.getElementById('chat-messages');
-const loginSection = document.getElementById('login-section');
-const gameSection = document.getElementById('game');
-const loginMsg = document.getElementById('login-msg');
-const shopMsg = document.getElementById('shop-msg');
-
-function updateUI() {
-  coinElem.textContent = userData.coins;
-  levelElem.textContent = userData.level;
-  xpElem.textContent = userData.xp;
-  // Update inventory list
-  inventoryList.innerHTML = '';
-  userData.inventory.forEach((item, idx) => {
-    const li = document.createElement('li');
-    li.textContent = `${item.name} x${item.count}`;
-    inventoryList.appendChild(li);
-  });
-}
-
-// Level system simple, naik level tiap 100 XP
-function checkLevelUp() {
-  const neededXP = userData.level * 100;
-  if (userData.xp >= neededXP) {
-    userData.level++;
-    userData.xp -= neededXP;
-    shopMsg.textContent = `Congrats! You reached level ${userData.level}!`;
-    saveUserData();
-    updateUI();
-  }
-}
-
-function saveUserData() {
-  if (!currentUser) return;
-  db.ref('users/' + currentUser.uid).set(userData);
-  updateLeaderboard();
-}
-
-function loadUserData(uid) {
-  db.ref('users/' + uid).once('value').then(snapshot => {
-    if (snapshot.exists()) {
-      userData = snapshot.val();
-    }
-    updateUI();
-  });
-}
-
-function updateLeaderboard() {
-  if (!currentUser) return;
-  firestore.collection('leaderboard').doc(currentUser.uid).set({
-    username: currentUser.email,
-    coins: userData.coins,
-    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-  });
-  loadLeaderboard();
-}
-
-function loadLeaderboard() {
-  firestore.collection('leaderboard')
-    .orderBy('coins', 'desc').limit(10).get().then(snapshot => {
-      leaderboardList.innerHTML = '';
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        const li = document.createElement('li');
-        li.textContent = `${data.username}: ${data.coins} coins`;
-        leaderboardList.appendChild(li);
-      });
-    });
-}
-
-function addItemToInventory(itemName) {
-  const found = userData.inventory.find(i => i.name === itemName);
-  if (found) {
-    found.count++;
-  } else {
-    userData.inventory.push({name: itemName, count: 1});
-  }
-  saveUserData();
-  updateUI();
-}
-
-function randomGachaItem() {
-  const items = [
-    "Diamond Pickaxe",
-    "Golden Shovel",
-    "Silver Helmet",
-    "Magic Potion",
-    "Rare Gem",
-    "Epic Sword",
-    "Ancient Relic",
-    "Mystic Scroll",
-    "Energy Drink",
-    "Lucky Charm"
-  ];
-  return items[Math.floor(Math.random() * items.length)];
-}
-
-function canClaimDaily() {
-  const now = Date.now();
-  const oneDay = 24 * 60 * 60 * 1000;
-  return (now - userData.lastDaily) > oneDay;
-}
-
-function claimDaily() {
-  if (canClaimDaily()) {
-    userData.coins += 500;
-    userData.lastDaily = Date.now();
-    shopMsg.textContent = "Daily reward claimed: 500 coins!";
-    saveUserData();
-    updateUI();
-  } else {
-    shopMsg.textContent = "You already claimed your daily reward.";
-  }
-}
-
-function sendMessage(message) {
-  if (!currentUser) return;
-  const chatRef = db.ref('chat');
-  const newMsgRef = chatRef.push();
-  newMsgRef.set({
-    user: currentUser.email,
-    message,
-    timestamp: Date.now()
-  });
-}
-
-function loadChatMessages() {
-  const chatRef = db.ref('chat').limitToLast(50);
-  chatRef.on('child_added', snapshot => {
-    const data = snapshot.val();
-    const msgElem = document.createElement('div');
-    msgElem.textContent = `${data.user}: ${data.message}`;
-    chatMessages.appendChild(msgElem);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-}
-
-document.getElementById('btn-login').onclick = () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  auth.signInWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      currentUser = userCredential.user;
-      loginSection.style.display = 'none';
-      gameSection.style.display = 'block';
-      loadUserData(currentUser.uid);
-      loadLeaderboard();
-      loadChatMessages();
-      loginMsg.textContent = '';
-      shopMsg.textContent = '';
-    })
-    .catch(e => loginMsg.textContent = 'Login error: ' + e.message);
-};
-
-document.getElementById('btn-register').onclick = () => {
-  const email = document.getElementById('email').value;
-  const password = document.getElementById('password').value;
-  auth.createUserWithEmailAndPassword(email, password)
-    .then(userCredential => {
-      currentUser = userCredential.user;
-      userData = {
-        coins: 0,
-        level: 1,
-        xp: 0,
-        inventory: [],
-        pickaxeLevel: 1,
-        lastDaily: 0
-      };
-      saveUserData();
-      loginSection.style.display = 'none';
-      gameSection.style.display = 'block';
-      loadLeaderboard();
-      loadChatMessages();
-      loginMsg.textContent = '';
-      shopMsg.textContent = '';
-    })
-    .catch(e => loginMsg.textContent = 'Register error: ' + e.message);
-};
-
-document.getElementById('btn-mine').onclick = () => {
-  const baseMining = 10;
-  const upgradeBonus = userData.pickaxeLevel * 5;
-  const total = baseMining + upgradeBonus;
-  userData.coins += total;
-  userData.xp += 10;
-  shopMsg.textContent = `You mined ${total} coins!`;
-  checkLevelUp();
-  saveUserData();
-  updateUI();
-};
-
-document.getElementById('btn-gacha').onclick = () => {
-  if (userData.coins < 1000) {
-    shopMsg.textContent = "Not enough coins for gacha (need 1000).";
-    return;
-  }
-  userData.coins -= 1000;
-  const newItem = randomGachaItem();
-  addItemToInventory(newItem);
-  shopMsg.textContent = `You got: ${newItem} from gacha!`;
-  saveUserData();
-  updateUI();
-};
-
-document.getElementById('btn-upgrade').onclick = () => {
-  const cost = 500 * userData.pickaxeLevel;
-  if (userData.coins < cost) {
-    shopMsg.textContent = `Not enough coins to upgrade pickaxe (cost: ${cost}).`;
-    return;
-  }
-  userData.coins -= cost;
-  userData.pickaxeLevel++;
-  shopMsg.textContent = `Pickaxe upgraded to level ${userData.pickaxeLevel}!`;
-  saveUserData();
-  updateUI();
-};
-
-document.getElementById('btn-daily').onclick = () => {
-  claimDaily();
-};
-
-document.getElementById('btn-send-chat').onclick = () => {
-  const msgInput = document.getElementById('chat-input');
-  const msg = msgInput.value.trim();
-  if (msg) {
-    sendMessage(msg);
-    msgInput.value = '';
-  }
-};
-
-document.getElementById('btn-logout').onclick = () => {
-  auth.signOut().then(() => {
-    currentUser = null;
-    userData = {
-      coins: 0,
-      level: 1,
-      xp: 0,
-      inventory: [],
-      pickaxeLevel: 1,
-      lastDaily: 0
     };
-    loginSection.style.display = 'block';
-    gameSection.style.display = 'none';
-    loginMsg.textContent = '';
-    shopMsg.textContent = '';
-    inventoryList.innerHTML = '';
-    leaderboardList.innerHTML = '';
-    chatMessages.innerHTML = '';
-  });
-};
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-// Auto logout if no user
-auth.onAuthStateChanged(user => {
-  if (user) {
-    currentUser = user;
-    loginSection.style.display = 'none';
-    gameSection.style.display = 'block';
-    loadUserData(user.uid);
-    loadLeaderboard();
-    loadChatMessages();
-  } else {
-    currentUser = null;
-    loginSection.style.display = 'block';
-    gameSection.style.display = 'none';
-  }
-});
-</script>
+    // --- GLOBAL STATE ---
+    let currentUser = null;
+    let userData = null;
 
-</body>
-</html>
+    // --- UTILS ---
+    function log(msg) {
+      const logDiv = document.getElementById("log");
+      const time = new Date().toLocaleTimeString();
+      logDiv.innerHTML = `[${time}] ${msg}<br>` + logDiv.innerHTML;
+    }
+
+    // --- AUTH ---
+    function register(){
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      if(!u || !p) return alert("Username dan password harus diisi");
+      db.ref("users/"+u).get().then(snap=>{
+        if(snap.exists()) return alert("Username sudah digunakan");
+        db.ref("users/"+u).set({
+          password: p,
+          coins: 0,
+          inventory: {},
+          lastDaily: 0,
+          achievements: {},
+          quests: {},
+          created: Date.now()
+        }).then(()=>{
+          alert("Register berhasil, silakan login");
+        });
+      });
+    }
+    function login(){
+      const u = document.getElementById("username").value.trim();
+      const p = document.getElementById("password").value.trim();
+      if(!u || !p) return alert("Username dan password harus diisi");
+      db.ref("users/"+u).get().then(snap=>{
+        if(!snap.exists()) return alert("User tidak ditemukan");
+        if(snap.val().password !== p) return alert("Password salah");
+        currentUser = u;
+        userData = snap.val();
+        document.getElementById("auth").style.display = "none";
+        document.getElementById("game").style.display = "block";
+        document.getElementById("playername").innerText = currentUser;
+        loadUserData();
+        log("Login sukses");
+      });
+    }
+
+    // --- LOAD USER DATA & LISTENERS ---
+    function loadUserData(){
+      db.ref("users/"+currentUser).on("value", snap=>{
+        userData = snap.val();
+        updateUI();
+      });
+    }
+
+    // --- UPDATE UI ---
+    function updateUI(){
+      document.getElementById("coins").innerText = userData.coins || 0;
+      renderInventory();
+      renderLeaderboard();
+      renderShop();
+      renderQuests();
+      renderAchievements();
+    }
+
+    // --- MINE ---
+    function mine(){
+      // Tambah koin mining + bonus dari item (contoh)
+      let bonus = 0;
+      if(userData.inventory){
+        for(let item in userData.inventory){
+          if(item === "Iron Pickaxe") bonus += 2;
+          if(item === "Gold Pickaxe") bonus += 5;
+          if(item === "Diamond Pickaxe") bonus += 10;
+          if(item === "Legendary Hammer") bonus += 20;
+        }
+      }
+      let addCoins = 1 + bonus;
+      let newCoins = (userData.coins || 0) + addCoins;
+      db.ref("users/"+currentUser).update({coins:newCoins});
+      log(`Mining: +${addCoins} coins`);
+    }
+
+    // --- GACHA ---
+    const gachas = [
+      {name:"Stone Pickaxe", rarity:"Common", power:1, rate:50},
+      {name:"Iron Pickaxe", rarity:"Uncommon", power:2, rate:30},
+      {name:"Gold Pickaxe", rarity:"Rare", power:5, rate:15},
+      {name:"Diamond Pickaxe", rarity:"Epic", power:10, rate:4},
+      {name:"Legendary Hammer", rarity:"Legendary", power:20, rate:1},
+      {name:"Mystic Drill", rarity:"Mythic", power:40, rate:0.5}
+    ];
+    function gacha(){
+      if((userData.coins||0) < 1000) return alert("Koin tidak cukup untuk Gacha!");
+      // Kurangi 1000 coin
+      db.ref("users/"+currentUser+"/coins").transaction(c=>{
+        if(c === null) return 0;
+        if(c < 1000) return;
+        return c - 1000;
+      }, (err, committed, snap) => {
+        if(err || !committed) return alert("Transaksi gagal");
+        const item = getRandomGacha();
+        addItemToInventory(item.name);
+        log(`Gacha: Mendapatkan ${item.name} (${item.rarity})`);
+        alert(`Selamat! Kamu mendapatkan ${item.name} (${item.rarity})`);
+      });
+    }
+    function getRandomGacha(){
+      let r = Math.random()*100;
+      let sum = 0;
+      for(let g of gachas){
+        sum += g.rate;
+        if(r <= sum) return g;
