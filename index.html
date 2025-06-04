@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mining Gacha Leaderboard Firebase</title>
+  <style>
+    body { background: #121212; color: #eee; font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    input, button { padding: 10px; margin: 5px; border-radius: 5px; border: none; }
+    button { background: #1db954; color: white; cursor: pointer; }
+    button:hover { background: #1ed760; }
+    table { margin: 20px auto; border-collapse: collapse; width: 80%; max-width: 600px; }
+    th, td { padding: 10px; border: 1px solid #444; }
+    th { background: #282828; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <h1>Mining & Gacha dengan Leaderboard</h1>
+  <div id="loginDiv">
+    <input type="text" id="username" placeholder="Masukkan nickname" />
+    <button onclick="login()">Login</button>
+  </div>
+
+  <div id="gameDiv" style="display:none;">
+    <p>Halo, <span id="userNameDisplay"></span>! Coin kamu: <span id="coinDisplay">0</span></p>
+    <button onclick="mine()">⛏️ Mining</button>
+    <button onclick="spinGacha()">🎰 Spin Gacha</button>
+    <button onclick="useItem()">🎁 Pakai Item</button>
+    <p id="spinResult"></p>
+    <p id="inventory"></p>
+
+    <h2>Leaderboard</h2>
+    <table id="leaderboardTable">
+      <thead><tr><th>No</th><th>Nama</th><th>Coin</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+<script>
+  // Ganti isi firebaseConfig ini dengan config dari Firebase kamu
+  const firebaseConfig = {
+    apiKey: "AIzaSyASee7XY4Kjjr_rtPTUGAqOntjPkldG5S4",
+  authDomain: "mining-gacha-web.firebaseapp.com",
+  databaseURL: "https://mining-gacha-web-default-rtdb.firebaseio.com",
+  projectId: "mining-gacha-web",
+  storageBucket: "mining-gacha-web.firebasestorage.app",
+  messagingSenderId: "1057169218553",
+  appId: "1:1057169218553:web:fafff63f01d4de5ca7bb28",
+  measurementId: "G-LF6SQS0TXH"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  let currentUser = null;
+  let inventory = [];
+  let doubleCoinActive = false;
+
+  function login() {
+    const username = document.getElementById("username").value.trim();
+    if (!username) {
+      alert("Tolong isi nickname dulu ya!");
+      return;
+    }
+    currentUser = username;
+    document.getElementById("loginDiv").style.display = "none";
+    document.getElementById("gameDiv").style.display = "block";
+    document.getElementById("userNameDisplay").innerText = currentUser;
+
+    db.ref("users/" + currentUser).once("value", snapshot => {
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        inventory = data.inventory || [];
+        doubleCoinActive = false;
+        updateInventory();
+        updateCoinDisplay(data.coins || 0);
+      } else {
+        db.ref("users/" + currentUser).set({ coins: 0, inventory: [] });
+        updateCoinDisplay(0);
+        inventory = [];
+        updateInventory();
+      }
+    });
+
+    db.ref("users").on("value", snapshot => {
+      const users = snapshot.val();
+      if (!users) return;
+      let leaderboard = [];
+      for (const user in users) {
+        leaderboard.push({ name: user, coins: users[user].coins || 0 });
+      }
+      leaderboard.sort((a,b) => b.coins - a.coins);
+      renderLeaderboard(leaderboard);
+    });
+  }
+
+  function updateCoinDisplay(coin) {
+    document.getElementById("coinDisplay").innerText = coin;
+  }
+
+  function updateInventory() {
+    document.getElementById("inventory").innerText = "Inventory: " + (inventory.join(", ") || "Kosong");
+  }
+
+  function saveUserData(coins) {
+    db.ref("users/" + currentUser).set({
+      coins: coins,
+      inventory: inventory
+    });
+  }
+
+  function mine() {
+    if (!currentUser) return;
+    let earned = Math.floor(Math.random() * 10) + 1;
+    if (doubleCoinActive) earned *= 2;
+    db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
+      let currentCoins = snapshot.val() || 0;
+      currentCoins += earned;
+      updateCoinDisplay(currentCoins);
+      saveUserData(currentCoins);
+      alert(`Kamu mendapatkan ${earned} coin dari mining!`);
+    });
+  }
+
+  function spinGacha() {
+    if (!currentUser) return;
+    const rewards = [
+      {text: "🎉 10 Coin", type: "coin", value: 10},
+      {text: "💰 20 Coin", type: "coin", value: 20},
+      {text: "✨ Item: Double Coin", type: "item", value: "Double Coin"},
+      {text: "🔥 Item: Bonus 100", type: "item", value: "Bonus 100"},
+      {text: "😥 Zonk", type: "zonk"}
+    ];
+
+    const result = rewards[Math.floor(Math.random() * rewards.length)];
+    document.getElementById("spinResult").innerText = `Hasil: ${result.text}`;
+
+    if (result.type === "coin") {
+      db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
+        let currentCoins = snapshot.val() || 0;
+        currentCoins += result.value;
+        updateCoinDisplay(currentCoins);
+        saveUserData(currentCoins);
+      });
+    } else if (result.type === "item") {
+      inventory.push(result.value);
+      updateInventory();
+      db.ref("users/" + currentUser + "/inventory").set(inventory);
+    }
+  }
+
+  function useItem() {
+    if (inventory.length === 0) {
+      alert("Belum ada item!");
+      return;
+    }
+    const item = inventory.shift();
+    if (item === "Double Coin") {
+      doubleCoinActive = true;
+      alert("Double Coin Aktif untuk mining berikutnya!");
+    } else if (item === "Bonus 100") {
+      db.ref("users/" + currentUser + "/coins").once("value").then(snapshot => {
+        let currentCoins = snapshot.val() || 0;
+        currentCoins += 100;
+        updateCoinDisplay(currentCoins);
+        saveUserData(currentCoins);
+      });
+    }
+    updateInventory();
+    db.ref("users/" + currentUser + "/inventory").set(inventory);
+  }
+
+  function renderLeaderboard(list) {
+    const tbody = document.querySelector("#leaderboardTable tbody");
+    tbody.innerHTML = "";
+    list.forEach((user, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>${i+1}</td><td>${user.name}</td><td>${user.coins}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
+
+</body>
+</html>
