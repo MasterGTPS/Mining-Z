@@ -1,106 +1,113 @@
 <!DOCTYPE html><html lang="id">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulasi Gambling - Just for Fun</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crash Simulator - Just for Fun</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(135deg, #0f0f1a, #32004b);
-      color: #fff;
+      background: #0d0d0d;
+      color: white;
       text-align: center;
-      padding: 20px;
     }
     h1 {
-      color: #ffffff;
-    }
-    .saldo {
-      font-size: 1.2em;
-      margin: 10px 0;
-    }
-    .nav {
-      margin: 20px 0;
-    }
-    .nav button {
-      background: #6a0dad;
+      background: #4b0082;
+      margin: 0;
+      padding: 20px;
       color: white;
-      padding: 10px 20px;
-      margin: 5px;
+    }
+    #saldo {
+      margin: 10px;
+      font-size: 1.2em;
+    }
+    .container {
+      padding: 20px;
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      border-radius: 8px;
       border: none;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    .nav button:hover {
-      background: #9d00ff;
-    }
-    .game-section {
-      display: none;
-      margin-top: 20px;
-    }
-    .visible {
-      display: block;
-    }
-    input[type="number"] {
-      padding: 5px;
       font-size: 1em;
     }
-    .btn-play {
-      margin-top: 10px;
-      background-color: #6a0dad;
+    button {
+      background: #800080;
       color: white;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 5px;
       cursor: pointer;
+    }
+    #multiplier {
+      font-size: 3em;
+      margin: 20px 0;
+    }
+    #status {
+      margin-top: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Simulasi Gambling - No Deposit, Just for Fun</h1>
-  <div class="saldo">Saldo: <span id="saldo">1000</span> koin</div>  <div class="nav">
-    <button onclick="showGame('crash')">Crash</button>
-    <button onclick="showGame('roulette')">Roulette</button>
-    <button onclick="showGame('dice')">Dice</button>
-    <button onclick="showGame('slot')">Slot</button>
-    <button onclick="showGame('coinflip')">Coin Flip</button>
-    <button onclick="showGame('caseopening')">Case Opening</button>
-  </div>  <div id="crash" class="game-section">
-    <h2>Crash</h2>
-    <label>Masukkan taruhan:</label>
-    <input type="number" id="crashBet" min="1" max="1000" value="10" />
-    <button class="btn-play" onclick="playCrash()">Main</button>
-    <div id="crashResult"></div>
-  </div>  <!-- Game lainnya nanti menyusul -->  <script>
+  <h1>Crash Simulator - Just for Fun</h1>
+  <div id="saldo">Saldo: 1000 koin</div>
+  <div class="container">
+    <label for="taruhan">Masukkan taruhan:</label><br>
+    <input type="number" id="taruhan" min="1" value="10">
+    <br>
+    <button onclick="mulaiCrash()">Main</button>
+    <button onclick="klaim()">Klaim</button>
+    <div id="multiplier">x1.00</div>
+    <div id="status"></div>
+  </div>  <script>
     let saldo = 1000;
+    let multiplier = 1.00;
+    let crashed = false;
+    let gameStarted = false;
+    let interval;
+    let crashPoint;
 
-    function showGame(gameId) {
-      const sections = document.querySelectorAll('.game-section');
-      sections.forEach(section => section.classList.remove('visible'));
-      document.getElementById(gameId).classList.add('visible');
+    function updateSaldo() {
+      document.getElementById('saldo').innerText = `Saldo: ${saldo} koin`;
     }
 
-    function updateSaldoDisplay() {
-      document.getElementById('saldo').innerText = saldo;
-    }
+    function mulaiCrash() {
+      if (gameStarted) return;
 
-    function playCrash() {
-      const bet = parseInt(document.getElementById('crashBet').value);
-      const resultDiv = document.getElementById('crashResult');
-      if (isNaN(bet) || bet <= 0 || bet > saldo) {
-        resultDiv.innerText = 'Taruhan tidak valid.';
+      let taruhan = parseInt(document.getElementById('taruhan').value);
+      if (taruhan <= 0 || taruhan > saldo) {
+        alert("Taruhan tidak valid!");
         return;
       }
-      const multiplier = Math.random() * 3 + 0.5; // 0.5x sampai 3.5x
-      const win = Math.random() < 0.5;
-      if (win) {
-        const profit = Math.floor(bet * multiplier);
-        saldo += profit;
-        resultDiv.innerText = `Menang! Taruhan dikali ${multiplier.toFixed(2)}. Kamu dapat ${profit} koin!`;
-      } else {
-        saldo -= bet;
-        resultDiv.innerText = `Kalah! Kamu kehilangan ${bet} koin.`;
-      }
-      updateSaldoDisplay();
+
+      saldo -= taruhan;
+      updateSaldo();
+      multiplier = 1.00;
+      crashed = false;
+      gameStarted = true;
+      crashPoint = Math.random() * 4 + 1; // x1.00 - x5.00
+      document.getElementById("status").innerText = "Crash dimulai...";
+
+      interval = setInterval(() => {
+        multiplier += 0.01;
+        document.getElementById("multiplier").innerText = `x${multiplier.toFixed(2)}`;
+        if (multiplier >= crashPoint) {
+          clearInterval(interval);
+          crashed = true;
+          gameStarted = false;
+          document.getElementById("status").innerText = `Crash! x${multiplier.toFixed(2)}`;
+        }
+      }, 50);
     }
+
+    function klaim() {
+      if (!gameStarted || crashed) return;
+      clearInterval(interval);
+      gameStarted = false;
+      let taruhan = parseInt(document.getElementById('taruhan').value);
+      let hasil = Math.floor(taruhan * multiplier);
+      saldo += hasil;
+      updateSaldo();
+      document.getElementById("status").innerText = `Berhasil klaim di x${multiplier.toFixed(2)}. Menang: ${hasil} koin!`;
+    }
+
+    updateSaldo();
   </script></body>
 </html>
