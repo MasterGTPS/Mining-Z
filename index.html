@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,28 +8,41 @@
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: radial-gradient(circle, #1f0036, #000);
+      background: #000;
       color: white;
       text-align: center;
     }
+    .neon-border {
+      border: 4px solid #6a0dad;
+      box-shadow: 0 0 20px #6a0dad, 0 0 40px #6a0dad, 0 0 60px #6a0dad;
+      border-radius: 10px;
+      padding: 20px;
+    }
     .container {
       max-width: 500px;
-      margin: auto;
+      margin: 60px auto;
       padding: 20px;
     }
     .title {
-      font-size: 2em;
-      margin-bottom: 10px;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      color: #bb86fc;
+      text-shadow: 0 0 10px #bb86fc;
     }
     .multiplier {
       font-size: 3em;
       margin: 20px 0;
       transition: transform 0.2s ease-in-out;
+      color: #ffffff;
     }
     .input-group input {
       padding: 10px;
       width: 100px;
       margin: 5px;
+      border: none;
+      border-radius: 5px;
+      background: #2a003f;
+      color: white;
     }
     button {
       padding: 10px 20px;
@@ -38,15 +52,20 @@
       background-color: #6a0dad;
       color: white;
       border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #51009e;
     }
     .balance {
       margin-top: 20px;
       font-size: 1.2em;
+      color: #d0aaff;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="container neon-border">
     <div class="title">Crash Simulator</div>
     <div id="multiplier" class="multiplier">x1.00</div>
     <div class="input-group">
@@ -55,7 +74,11 @@
       <button onclick="cashOut()">Claim</button>
     </div>
     <div class="balance">Balance: <span id="balance">1000</span> Coins</div>
-  </div><audio id="tick" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_06c804ebf1.mp3?filename=tick-tock-clock-1-87235.mp3"></audio> <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2021/11/15/audio_7ba89a388c.mp3?filename=boom-1-97982.mp3"></audio> <audio id="cashSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8ecaf5a3a1.mp3?filename=collect-coin-19474.mp3"></audio>
+  </div>
+
+  <audio id="tick" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_06c804ebf1.mp3?filename=tick-tock-clock-1-87235.mp3"></audio>
+  <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2021/11/15/audio_7ba89a388c.mp3?filename=boom-1-97982.mp3"></audio>
+  <audio id="cashSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8ecaf5a3a1.mp3?filename=collect-coin-19474.mp3"></audio>
 
   <script>
     let multiplier = 1.00;
@@ -64,7 +87,7 @@
     let crashed = false;
     let balance = 1000;
     let bet = 10;
-    let cashoutAt = 0;
+    let crashPoint = 0;
 
     const multiplierEl = document.getElementById("multiplier");
     const balanceEl = document.getElementById("balance");
@@ -75,9 +98,9 @@
 
     function getRandomCrashPoint() {
       let r = Math.random();
-      if (r < 0.2) return +(1 + Math.random()).toFixed(2);  // 20% crash cepat
-      if (r < 0.8) return +(1.5 + Math.random() * 1.5).toFixed(2); // 60% tengah
-      return +(3 + Math.random() * 97).toFixed(2); // 20% bisa tinggi
+      if (r < 0.4) return +(1 + Math.random()).toFixed(2);  // 40% cepat crash
+      if (r < 0.85) return +(1.5 + Math.random() * 1.5).toFixed(2); // 45% menengah
+      return +(3 + Math.random() * 97).toFixed(2); // 15% tinggi
     }
 
     function startGame() {
@@ -95,7 +118,7 @@
       betInput.disabled = true;
 
       interval = setInterval(() => {
-        multiplier = +(multiplier + 0.05).toFixed(2);
+        multiplier = +(multiplier + 0.1).toFixed(2);
         multiplierEl.innerText = `x${multiplier.toFixed(2)}`;
         multiplierEl.style.transform = `scale(${1 + multiplier / 10})`;
         tickSound.play();
@@ -103,7 +126,7 @@
         if (multiplier >= crashPoint) {
           crash();
         }
-      }, 150);
+      }, 120);
     }
 
     function crash() {
@@ -130,5 +153,6 @@
     function updateBalance() {
       balanceEl.innerText = balance.toFixed(2);
     }
-  </script></body>
+  </script>
+</body>
 </html>
