@@ -1,201 +1,120 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tower Simulator</title>
+  <title>Plinko Simulator</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: radial-gradient(circle, #1f0036, #000);
+      background-color: #0f0f1a;
       color: white;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    .container {
-      text-align: center;
-      padding: 20px;
-      border: 2px solid #a020f0;
-      border-radius: 20px;
-      box-shadow: 0 0 30px #a020f0;
-      background-color: rgba(0, 0, 0, 0.6);
-    }
-    .title {
-      font-size: 2em;
-      margin-bottom: 10px;
-    }
-    .tower {
-      display: grid;
-      grid-template-rows: repeat(8, 1fr);
-      gap: 8px;
-      margin: 20px 0;
-    }
-    .row {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-    }
-    .cell {
-      width: 60px;
-      height: 60px;
-      background-color: #222;
-      border: 2px solid #6a0dad;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .cell.correct {
-      background-color: #3a3;
-    }
-    .cell.wrong {
-      background-color: #a00;
-    }
-    input {
-      padding: 10px;
-      width: 100px;
-      margin: 5px;
-    }
-    input:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-      border: none;
-      background-color: #6a0dad;
-      color: white;
-      border-radius: 5px;
-    }
-    .balance, .multiplier {
-      margin-top: 10px;
-      font-size: 1.2em;
-    }
-    .note {
-      margin-top: 30px;
-      font-size: 0.9em;
-      color: rgba(255, 255, 255, 0.3);
-    }
+    }h1 {
+  margin-top: 1rem;
+  color: #b86fff;
+}
+
+#plinko-board {
+  display: grid;
+  grid-template-columns: repeat(9, 50px);
+  grid-auto-rows: 50px;
+  margin-top: 20px;
+  gap: 2px;
+  position: relative;
+}
+
+.peg {
+  width: 20px;
+  height: 20px;
+  background-color: #888;
+  border-radius: 50%;
+  margin: auto;
+}
+
+.slot {
+  width: 50px;
+  height: 20px;
+  text-align: center;
+  background: #1e1e2f;
+  border-top: 2px solid #b86fff;
+  color: #b86fff;
+}
+
+#ball {
+  width: 20px;
+  height: 20px;
+  background-color: #ff4081;
+  border-radius: 50%;
+  position: absolute;
+  top: 0;
+  left: 215px;
+  transition: top 0.2s, left 0.2s;
+}
+
+#controls {
+  margin-top: 20px;
+}
+
+#note {
+  margin-top: 30px;
+  opacity: 0.3;
+  font-size: 0.9rem;
+  text-align: center;
+  max-width: 400px;
+}
+
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="title">Tower Simulator</div>
-    <input id="betInput" type="number" placeholder="Bet" value="10" />
-    <button onclick="startTower()">Main</button>
-    <button onclick="claimTower()">Claim</button>
-    <div class="balance">Balance: <span id="balance">50</span> Coins</div>
-    <div class="multiplier">Multiplier: <span id="multiplier">x1.00</span></div>
-    <div class="tower" id="tower"></div>
-    <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online.</div>
-  </div>
-
-  <script>
-    const tower = document.getElementById("tower");
-    const balanceEl = document.getElementById("balance");
-    const multiplierEl = document.getElementById("multiplier");
-    const betInput = document.getElementById("betInput");
-
-    let balance = 50;
-    let bet = 10;
-    let playing = false;
-    let currentRow = 0;
-    let multiplier = 1.00;
-    const maxRows = 8;
-    const cellsPerRow = 3;
-    let correctPath = [];
-
-    function startTower() {
-      if (playing) return;
-
-      bet = parseFloat(betInput.value);
-      if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
-      balance -= bet;
-      updateUI();
-
-      betInput.disabled = true;
-      tower.innerHTML = "";
-      correctPath = [];
-      multiplier = 1.00;
-      updateMultiplier();
-      playing = true;
-      currentRow = 0;
-
-      // Buat dari bawah ke atas
-      for (let i = maxRows - 1; i >= 0; i--) {
-        const correctIndex = Math.floor(Math.random() * cellsPerRow);
-        correctPath[i] = correctIndex;
-
-        const row = document.createElement("div");
-        row.className = "row";
-        for (let j = 0; j < cellsPerRow; j++) {
-          const cell = document.createElement("div");
-          cell.className = "cell";
-          if (i === 0) {
-            cell.addEventListener("click", () => pickCell(i, j, cell));
+  <h1>🎯 Plinko Simulator</h1>  <div id="controls">
+    <button onclick="dropBall()">Mainkan</button>
+  </div>  <div id="plinko-board">
+    <!-- Pegs -->
+    <script>
+      const board = document.getElementById("plinko-board");
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 9; c++) {
+          const peg = document.createElement("div");
+          peg.classList.add("peg");
+          if ((r % 2 === 0 && c % 2 === 1) || (r % 2 === 1 && c % 2 === 0)) {
+            board.appendChild(peg);
+          } else {
+            board.appendChild(document.createElement("div"));
           }
-          row.appendChild(cell);
         }
-        tower.appendChild(row);
-      }
-    }
+      }// Slots with multipliers
+  const multipliers = ["x0", "x0.5", "x1", "x2", "x5", "x2", "x1", "x0.5", "x0"];
+  for (let i = 0; i < multipliers.length; i++) {
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    slot.innerText = multipliers[i];
+    board.appendChild(slot);
+  }
+</script>
 
-    function pickCell(row, index, cell) {
-      if (!playing || row !== currentRow) return;
-
-      const rows = document.querySelectorAll(".row");
-      const currentCells = rows[maxRows - 1 - row].children;
-
-      if (index === correctPath[row]) {
-        cell.classList.add("correct");
-        multiplier += 0.5;
-        updateMultiplier();
-        currentRow++;
-
-        if (currentRow >= maxRows) {
-          alert("Kamu menyelesaikan menara! Klaim kemenanganmu!");
-          playing = false;
-          betInput.disabled = false;
+  </div>  <div id="ball"></div>  <div id="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online.</div>  <script>
+    function dropBall() {
+      const ball = document.getElementById("ball");
+      let row = 0;
+      let col = 4.5;
+      function move() {
+        if (row >= 8) {
+          let finalCol = Math.round(col);
+          alert("Anda mendapat multiplier: " + document.getElementsByClassName("slot")[finalCol].innerText);
           return;
         }
-
-        // Enable next row
-        const nextCells = rows[maxRows - 1 - currentRow].children;
-        for (let i = 0; i < nextCells.length; i++) {
-          nextCells[i].addEventListener("click", () =>
-            pickCell(currentRow, i, nextCells[i])
-          );
-        }
-      } else {
-        cell.classList.add("wrong");
-        alert("Salah pilih! Kamu kehilangan taruhan.");
-        playing = false;
-        betInput.disabled = false;
+        const direction = Math.random() > 0.5 ? 0.5 : -0.5;
+        col += direction;
+        col = Math.max(0, Math.min(8, col));
+        ball.style.top = (row * 50) + "px";
+        ball.style.left = (col * 50) + 15 + "px";
+        row++;
+        setTimeout(move, 300);
       }
+      move();
     }
-
-    function claimTower() {
-      if (!playing || currentRow === 0) return;
-      let win = +(bet * multiplier).toFixed(2);
-      balance += win;
-      updateUI();
-      alert(`Kamu menang ${win} coins!`);
-      playing = false;
-      betInput.disabled = false;
-    }
-
-    function updateUI() {
-      balanceEl.textContent = balance.toFixed(2);
-    }
-
-    function updateMultiplier() {
-      multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
-    }
-  </script>
-</body>
+  </script></body>
 </html>
