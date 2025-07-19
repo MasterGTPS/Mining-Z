@@ -1,161 +1,106 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html><html lang="id">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Simulasi Gambling</title>
+  <title>Simulasi Gambling - Just for Fun</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: #1a1a2e;
-      color: #eee;
-      overflow-x: hidden;
-    }
-    header {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #0f0f1a, #32004b);
+      color: #fff;
       text-align: center;
       padding: 20px;
-      background: #3a0ca3;
-      animation: fadeIn 2s ease-in-out;
     }
     h1 {
-      margin: 0;
+      color: #ffffff;
     }
-    .balance {
-      text-align: center;
+    .saldo {
       font-size: 1.2em;
       margin: 10px 0;
     }
-    nav {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      flex-wrap: wrap;
-      background: #240046;
-      padding: 10px;
+    .nav {
+      margin: 20px 0;
     }
-    nav button {
-      background: #5f0f40;
+    .nav button {
+      background: #6a0dad;
       color: white;
-      border: none;
       padding: 10px 20px;
-      border-radius: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
       cursor: pointer;
     }
-    nav button:hover {
-      background: #7f1d67;
+    .nav button:hover {
+      background: #9d00ff;
     }
-    .game {
+    .game-section {
       display: none;
-      padding: 20px;
-      animation: fadeIn 0.5s ease-in-out;
+      margin-top: 20px;
     }
-    .active {
+    .visible {
       display: block;
     }
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-10px); }
-      to { opacity: 1; transform: translateY(0); }
+    input[type="number"] {
+      padding: 5px;
+      font-size: 1em;
     }
-    .game h2 {
-      color: #ffb703;
-    }
-    input, select {
-      padding: 8px;
+    .btn-play {
       margin-top: 10px;
-      width: 100px;
-      border-radius: 8px;
+      background-color: #6a0dad;
+      color: white;
+      padding: 10px 15px;
       border: none;
-    }
-    button.play {
-      margin-top: 10px;
-      background: #7209b7;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>Simulasi Gambling - No Deposit, Just for Fun</h1>
-  </header>  <div class="balance">Saldo: <span id="balance">1000</span> koin</div>  <nav>
-    <button onclick="switchGame('crash')">Crash</button>
-    <button onclick="switchGame('roulette')">Roulette</button>
-    <button onclick="switchGame('dice')">Dice</button>
-    <button onclick="switchGame('slot')">Slot</button>
-    <button onclick="switchGame('coin')">Coin Flip</button>
-    <button onclick="switchGame('case')">Case Opening</button>
-  </nav>  <main>
-    <div id="crash" class="game active">
-      <h2>Crash</h2>
-      <p>Masukkan taruhan: <input type="number" id="crashBet" value="10"></p>
-      <button class="play" onclick="playCrash()">Main</button>
-      <p id="crashResult"></p>
-    </div>
-    <div id="roulette" class="game">
-      <h2>Roulette</h2>
-      <p>Masukkan taruhan: <input type="number" id="rouletteBet" value="10"></p>
-      <select id="rouletteColor">
-        <option value="red">Merah</option>
-        <option value="black">Hitam</option>
-      </select>
-      <button class="play" onclick="playRoulette()">Main</button>
-      <p id="rouletteResult"></p>
-    </div>
-    <div id="dice" class="game">
-      <h2>Dice</h2>
-      <p>Masukkan taruhan: <input type="number" id="diceBet" value="10"></p>
-      <button class="play" onclick="playDice()">Gulir Dadu</button>
-      <p id="diceResult"></p>
-    </div>
-    <div id="slot" class="game">
-      <h2>Slot Machine</h2>
-      <p>Masukkan taruhan: <input type="number" id="slotBet" value="10"></p>
-      <button class="play" onclick="playSlot()">Putar</button>
-      <p id="slotResult"></p>
-    </div>
-    <div id="coin" class="game">
-      <h2>Coin Flip</h2>
-      <p>Masukkan taruhan: <input type="number" id="coinBet" value="10"></p>
-      <select id="coinChoice">
-        <option value="heads">Heads</option>
-        <option value="tails">Tails</option>
-      </select>
-      <button class="play" onclick="playCoin()">Flip</button>
-      <p id="coinResult"></p>
-    </div>
-    <div id="case" class="game">
-      <h2>Case Opening</h2>
-      <p>Buka case seharga 50 koin</p>
-      <button class="play" onclick="openCase()">Buka</button>
-      <p id="caseResult"></p>
-    </div>
-  </main>  <script>
-    let balance = 1000;
+  <h1>Simulasi Gambling - No Deposit, Just for Fun</h1>
+  <div class="saldo">Saldo: <span id="saldo">1000</span> koin</div>  <div class="nav">
+    <button onclick="showGame('crash')">Crash</button>
+    <button onclick="showGame('roulette')">Roulette</button>
+    <button onclick="showGame('dice')">Dice</button>
+    <button onclick="showGame('slot')">Slot</button>
+    <button onclick="showGame('coinflip')">Coin Flip</button>
+    <button onclick="showGame('caseopening')">Case Opening</button>
+  </div>  <div id="crash" class="game-section">
+    <h2>Crash</h2>
+    <label>Masukkan taruhan:</label>
+    <input type="number" id="crashBet" min="1" max="1000" value="10" />
+    <button class="btn-play" onclick="playCrash()">Main</button>
+    <div id="crashResult"></div>
+  </div>  <!-- Game lainnya nanti menyusul -->  <script>
+    let saldo = 1000;
 
-    function updateBalance() {
-      document.getElementById("balance").innerText = balance;
+    function showGame(gameId) {
+      const sections = document.querySelectorAll('.game-section');
+      sections.forEach(section => section.classList.remove('visible'));
+      document.getElementById(gameId).classList.add('visible');
     }
 
-    function switchGame(gameId) {
-      document.querySelectorAll(".game").forEach(el => el.classList.remove("active"));
-      document.getElementById(gameId).classList.add("active");
-    }
-
-    function getBet(inputId) {
-      const bet = parseInt(document.getElementById(inputId).value);
-      if (isNaN(bet) || bet <= 0 || bet > balance) return 0;
-      return bet;
+    function updateSaldoDisplay() {
+      document.getElementById('saldo').innerText = saldo;
     }
 
     function playCrash() {
-      const bet = getBet("crashBet");
-      if (!bet) return alert("Taruhan tidak valid.");
-      const multiplier = Math.random() * 5 + 1;
+      const bet = parseInt(document.getElementById('crashBet').value);
+      const resultDiv = document.getElementById('crashResult');
+      if (isNaN(bet) || bet <= 0 || bet > saldo) {
+        resultDiv.innerText = 'Taruhan tidak valid.';
+        return;
+      }
+      const multiplier = Math.random() * 3 + 0.5; // 0.5x sampai 3.5x
       const win = Math.random() < 0.5;
-      balance += win ? bet * (multiplier - 1) : -bet;
-      document.getElementById("crashResult").innerText = win ? `Menang! x${multiplier.toFixed(2)}` : "Crash! Kalah.";
-      updateBalance();
+      if (win) {
+        const profit = Math.floor(bet * multiplier);
+        saldo += profit;
+        resultDiv.innerText = `Menang! Taruhan dikali ${multiplier.toFixed(2)}. Kamu dapat ${profit} koin!`;
+      } else {
+        saldo -= bet;
+        resultDiv.innerText = `Kalah! Kamu kehilangan ${bet} koin.`;
+      }
+      updateSaldoDisplay();
     }
-
-    function playRoulette() {
-      const bet = getBet("rouletteBet");
-      if (!bet) return alert("Taruhan tidak valid.");
-      const pick = document.getElementById("rouletteColor").value;
+  </script></body>
+</html>
