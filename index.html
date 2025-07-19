@@ -15,7 +15,6 @@
       align-items: center;
       justify-content: center;
       height: 100vh;
-      overflow: hidden;
     }
     .container {
       text-align: center;
@@ -24,17 +23,16 @@
       border-radius: 20px;
       box-shadow: 0 0 30px #a020f0;
       background-color: rgba(0, 0, 0, 0.6);
-      max-height: 95vh;
     }
     .title {
       font-size: 2em;
       margin-bottom: 10px;
     }
     .tower {
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 10px;
-      margin: 15px 0;
+      display: grid;
+      grid-template-rows: repeat(8, 1fr);
+      gap: 8px;
+      margin: 20px 0;
     }
     .row {
       display: flex;
@@ -42,8 +40,8 @@
       justify-content: center;
     }
     .cell {
-      width: 50px;
-      height: 50px;
+      width: 60px;
+      height: 60px;
       background-color: #222;
       border: 2px solid #6a0dad;
       border-radius: 10px;
@@ -61,6 +59,10 @@
       width: 100px;
       margin: 5px;
     }
+    input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
     button {
       padding: 10px 20px;
       margin: 5px;
@@ -75,7 +77,7 @@
       font-size: 1.2em;
     }
     .note {
-      margin-top: 15px;
+      margin-top: 30px;
       font-size: 0.9em;
       color: rgba(255, 255, 255, 0.3);
     }
@@ -84,7 +86,7 @@
 <body>
   <div class="container">
     <div class="title">Tower Simulator</div>
-    <input id="betInput" type="number" placeholder="Bet" value="10">
+    <input id="betInput" type="number" placeholder="Bet" value="10" />
     <button onclick="startTower()">Main</button>
     <button onclick="claimTower()">Claim</button>
     <div class="balance">Balance: <span id="balance">50</span> Coins</div>
@@ -92,6 +94,7 @@
     <div class="tower" id="tower"></div>
     <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online.</div>
   </div>
+
   <script>
     const tower = document.getElementById("tower");
     const balanceEl = document.getElementById("balance");
@@ -109,21 +112,24 @@
 
     function startTower() {
       if (playing) return;
+
       bet = parseFloat(betInput.value);
       if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
       balance -= bet;
       updateUI();
+
+      betInput.disabled = true;
       tower.innerHTML = "";
       correctPath = [];
       multiplier = 1.00;
       updateMultiplier();
       playing = true;
       currentRow = 0;
-      betInput.disabled = true;
 
-      for (let i = 0; i < maxRows; i++) {
+      // Buat dari bawah ke atas
+      for (let i = maxRows - 1; i >= 0; i--) {
         const correctIndex = Math.floor(Math.random() * cellsPerRow);
-        correctPath.push(correctIndex);
+        correctPath[i] = correctIndex;
 
         const row = document.createElement("div");
         row.className = "row";
@@ -135,7 +141,7 @@
           }
           row.appendChild(cell);
         }
-        tower.prepend(row); // dibalik biar bawah dulu yang aktif
+        tower.appendChild(row);
       }
     }
 
@@ -154,17 +160,22 @@
         if (currentRow >= maxRows) {
           alert("Kamu menyelesaikan menara! Klaim kemenanganmu!");
           playing = false;
+          betInput.disabled = false;
           return;
         }
 
+        // Enable next row
         const nextCells = rows[maxRows - 1 - currentRow].children;
         for (let i = 0; i < nextCells.length; i++) {
-          nextCells[i].addEventListener("click", () => pickCell(currentRow, i, nextCells[i]));
+          nextCells[i].addEventListener("click", () =>
+            pickCell(currentRow, i, nextCells[i])
+          );
         }
       } else {
         cell.classList.add("wrong");
         alert("Salah pilih! Kamu kehilangan taruhan.");
         playing = false;
+        betInput.disabled = false;
       }
     }
 
@@ -175,11 +186,11 @@
       updateUI();
       alert(`Kamu menang ${win} coins!`);
       playing = false;
+      betInput.disabled = false;
     }
 
     function updateUI() {
       balanceEl.textContent = balance.toFixed(2);
-      betInput.disabled = !playing ? false : true;
     }
 
     function updateMultiplier() {
