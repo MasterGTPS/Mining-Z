@@ -1,253 +1,161 @@
-<!DOCTYPE html>
-<html lang="id">
+<!DOCTYPE html><html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Zufa Mining Clicker - Full Features</title>
-<style>
-  body {
-    margin: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #1f1c2c, #928dab);
-    color: #f0f0f0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-height: 100vh;
-  }
-  h1 {
-    margin: 20px 0 10px;
-    font-weight: 700;
-    letter-spacing: 2px;
-  }
-  #auth, #game {
-    background: rgba(0,0,0,0.6);
-    border-radius: 15px;
-    padding: 20px 30px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.5);
-    width: 320px;
-  }
-  input {
-    width: 100%;
-    margin: 10px 0;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: none;
-    font-size: 16px;
-  }
-  button {
-    margin: 10px 5px 0 0;
-    padding: 12px 18px;
-    border: none;
-    border-radius: 10px;
-    background: #4caf50;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.3s ease;
-  }
-  button:hover {
-    background: #66bb6a;
-  }
-  #coins, #playername {
-    font-weight: 700;
-    color: #ffea00;
-  }
-  .btn-secondary {
-    background: #2196f3;
-  }
-  .btn-secondary:hover {
-    background: #42a5f5;
-  }
-  #inventory, #leaderboard, #log, #shop, #dailyreward, #spinwheel, #quests, #achievements {
-    margin-top: 20px;
-    background: rgba(255 255 255 / 0.1);
-    padding: 12px;
-    border-radius: 12px;
-    max-height: 200px;
-    overflow-y: auto;
-    font-size: 14px;
-  }
-  .item {
-    background: rgba(255 255 255 / 0.2);
-    margin: 4px 0;
-    padding: 6px 10px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-  }
-  .item .name {
-    font-weight: 600;
-  }
-  .item .qty {
-    font-style: italic;
-    color: #ffeb3b;
-  }
-  #log {
-    height: 120px;
-    overflow-y: scroll;
-    font-family: monospace;
-    background: #222;
-    color: #eee;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simulasi Gambling</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      overflow-x: hidden;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background: #3a0ca3;
+      animation: fadeIn 2s ease-in-out;
+    }
+    h1 {
+      margin: 0;
+    }
+    .balance {
+      text-align: center;
+      font-size: 1.2em;
+      margin: 10px 0;
+    }
+    nav {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+      background: #240046;
+      padding: 10px;
+    }
+    nav button {
+      background: #5f0f40;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    nav button:hover {
+      background: #7f1d67;
+    }
+    .game {
+      display: none;
+      padding: 20px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .game h2 {
+      color: #ffb703;
+    }
+    input, select {
+      padding: 8px;
+      margin-top: 10px;
+      width: 100px;
+      border-radius: 8px;
+      border: none;
+    }
+    button.play {
+      margin-top: 10px;
+      background: #7209b7;
+    }
+  </style>
 </head>
 <body>
-  <h1>⚒️ Zufa Mining Clicker ⚒️</h1>
-
-  <div id="auth">
-    <input type="text" id="username" placeholder="Username" autocomplete="off" />
-    <input type="password" id="password" placeholder="Password" autocomplete="off" />
-    <div>
-      <button onclick="register()">Register</button>
-      <button onclick="login()">Login</button>
+  <header>
+    <h1>Simulasi Gambling - No Deposit, Just for Fun</h1>
+  </header>  <div class="balance">Saldo: <span id="balance">1000</span> koin</div>  <nav>
+    <button onclick="switchGame('crash')">Crash</button>
+    <button onclick="switchGame('roulette')">Roulette</button>
+    <button onclick="switchGame('dice')">Dice</button>
+    <button onclick="switchGame('slot')">Slot</button>
+    <button onclick="switchGame('coin')">Coin Flip</button>
+    <button onclick="switchGame('case')">Case Opening</button>
+  </nav>  <main>
+    <div id="crash" class="game active">
+      <h2>Crash</h2>
+      <p>Masukkan taruhan: <input type="number" id="crashBet" value="10"></p>
+      <button class="play" onclick="playCrash()">Main</button>
+      <p id="crashResult"></p>
     </div>
-  </div>
+    <div id="roulette" class="game">
+      <h2>Roulette</h2>
+      <p>Masukkan taruhan: <input type="number" id="rouletteBet" value="10"></p>
+      <select id="rouletteColor">
+        <option value="red">Merah</option>
+        <option value="black">Hitam</option>
+      </select>
+      <button class="play" onclick="playRoulette()">Main</button>
+      <p id="rouletteResult"></p>
+    </div>
+    <div id="dice" class="game">
+      <h2>Dice</h2>
+      <p>Masukkan taruhan: <input type="number" id="diceBet" value="10"></p>
+      <button class="play" onclick="playDice()">Gulir Dadu</button>
+      <p id="diceResult"></p>
+    </div>
+    <div id="slot" class="game">
+      <h2>Slot Machine</h2>
+      <p>Masukkan taruhan: <input type="number" id="slotBet" value="10"></p>
+      <button class="play" onclick="playSlot()">Putar</button>
+      <p id="slotResult"></p>
+    </div>
+    <div id="coin" class="game">
+      <h2>Coin Flip</h2>
+      <p>Masukkan taruhan: <input type="number" id="coinBet" value="10"></p>
+      <select id="coinChoice">
+        <option value="heads">Heads</option>
+        <option value="tails">Tails</option>
+      </select>
+      <button class="play" onclick="playCoin()">Flip</button>
+      <p id="coinResult"></p>
+    </div>
+    <div id="case" class="game">
+      <h2>Case Opening</h2>
+      <p>Buka case seharga 50 koin</p>
+      <button class="play" onclick="openCase()">Buka</button>
+      <p id="caseResult"></p>
+    </div>
+  </main>  <script>
+    let balance = 1000;
 
-  <div id="game" style="display:none;">
-    <h2>Welcome, <span id="playername"></span>!</h2>
-    <h3>Coins: <span id="coins">0</span></h3>
-    <button onclick="mine()" class="btn-secondary">Mine ⛏️</button>
-    <button onclick="gacha()" class="btn-secondary">Gacha 🎁 (Cost: 1000 coins)</button>
-    <button onclick="spinWheel()" class="btn-secondary">Spin Wheel 🎡</button>
-    <button onclick="claimDaily()" class="btn-secondary">Daily Reward 🎁</button>
-
-    <div id="inventory" style="margin-top:15px;"></div>
-    <div id="shop" style="margin-top:15px;"></div>
-    <div id="quests" style="margin-top:15px;"></div>
-    <div id="achievements" style="margin-top:15px;"></div>
-    <div id="leaderboard" style="margin-top:15px;"></div>
-    <div id="log"></div>
-  </div>
-
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script>
-    // CONFIG: isi dengan data Firebase kamu
-    const firebaseConfig = {
-      apiKey: "AIzaSyCKzrGb2iTb4QIA14pFujCf7j0TMFcf9D0",
-  authDomain: "mining-zz.firebaseapp.com",
-  databaseURL: "https://mining-zz-default-rtdb.firebaseio.com",
-  projectId: "mining-zz",
-  storageBucket: "mining-zz.firebasestorage.app",
-  messagingSenderId: "751992950328",
-  appId: "1:751992950328:web:2323b47fcc3dc6c6a6a0cd",
-  measurementId: "G-7JR5CKV56S"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // --- GLOBAL STATE ---
-    let currentUser = null;
-    let userData = null;
-
-    // --- UTILS ---
-    function log(msg) {
-      const logDiv = document.getElementById("log");
-      const time = new Date().toLocaleTimeString();
-      logDiv.innerHTML = `[${time}] ${msg}<br>` + logDiv.innerHTML;
+    function updateBalance() {
+      document.getElementById("balance").innerText = balance;
     }
 
-    // --- AUTH ---
-    function register(){
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      if(!u || !p) return alert("Username dan password harus diisi");
-      db.ref("users/"+u).get().then(snap=>{
-        if(snap.exists()) return alert("Username sudah digunakan");
-        db.ref("users/"+u).set({
-          password: p,
-          coins: 0,
-          inventory: {},
-          lastDaily: 0,
-          achievements: {},
-          quests: {},
-          created: Date.now()
-        }).then(()=>{
-          alert("Register berhasil, silakan login");
-        });
-      });
-    }
-    function login(){
-      const u = document.getElementById("username").value.trim();
-      const p = document.getElementById("password").value.trim();
-      if(!u || !p) return alert("Username dan password harus diisi");
-      db.ref("users/"+u).get().then(snap=>{
-        if(!snap.exists()) return alert("User tidak ditemukan");
-        if(snap.val().password !== p) return alert("Password salah");
-        currentUser = u;
-        userData = snap.val();
-        document.getElementById("auth").style.display = "none";
-        document.getElementById("game").style.display = "block";
-        document.getElementById("playername").innerText = currentUser;
-        loadUserData();
-        log("Login sukses");
-      });
+    function switchGame(gameId) {
+      document.querySelectorAll(".game").forEach(el => el.classList.remove("active"));
+      document.getElementById(gameId).classList.add("active");
     }
 
-    // --- LOAD USER DATA & LISTENERS ---
-    function loadUserData(){
-      db.ref("users/"+currentUser).on("value", snap=>{
-        userData = snap.val();
-        updateUI();
-      });
+    function getBet(inputId) {
+      const bet = parseInt(document.getElementById(inputId).value);
+      if (isNaN(bet) || bet <= 0 || bet > balance) return 0;
+      return bet;
     }
 
-    // --- UPDATE UI ---
-    function updateUI(){
-      document.getElementById("coins").innerText = userData.coins || 0;
-      renderInventory();
-      renderLeaderboard();
-      renderShop();
-      renderQuests();
-      renderAchievements();
+    function playCrash() {
+      const bet = getBet("crashBet");
+      if (!bet) return alert("Taruhan tidak valid.");
+      const multiplier = Math.random() * 5 + 1;
+      const win = Math.random() < 0.5;
+      balance += win ? bet * (multiplier - 1) : -bet;
+      document.getElementById("crashResult").innerText = win ? `Menang! x${multiplier.toFixed(2)}` : "Crash! Kalah.";
+      updateBalance();
     }
 
-    // --- MINE ---
-    function mine(){
-      // Tambah koin mining + bonus dari item (contoh)
-      let bonus = 0;
-      if(userData.inventory){
-        for(let item in userData.inventory){
-          if(item === "Iron Pickaxe") bonus += 2;
-          if(item === "Gold Pickaxe") bonus += 5;
-          if(item === "Diamond Pickaxe") bonus += 10;
-          if(item === "Legendary Hammer") bonus += 20;
-        }
-      }
-      let addCoins = 1 + bonus;
-      let newCoins = (userData.coins || 0) + addCoins;
-      db.ref("users/"+currentUser).update({coins:newCoins});
-      log(`Mining: +${addCoins} coins`);
-    }
-
-    // --- GACHA ---
-    const gachas = [
-      {name:"Stone Pickaxe", rarity:"Common", power:1, rate:50},
-      {name:"Iron Pickaxe", rarity:"Uncommon", power:2, rate:30},
-      {name:"Gold Pickaxe", rarity:"Rare", power:5, rate:15},
-      {name:"Diamond Pickaxe", rarity:"Epic", power:10, rate:4},
-      {name:"Legendary Hammer", rarity:"Legendary", power:20, rate:1},
-      {name:"Mystic Drill", rarity:"Mythic", power:40, rate:0.5}
-    ];
-    function gacha(){
-      if((userData.coins||0) < 1000) return alert("Koin tidak cukup untuk Gacha!");
-      // Kurangi 1000 coin
-      db.ref("users/"+currentUser+"/coins").transaction(c=>{
-        if(c === null) return 0;
-        if(c < 1000) return;
-        return c - 1000;
-      }, (err, committed, snap) => {
-        if(err || !committed) return alert("Transaksi gagal");
-        const item = getRandomGacha();
-        addItemToInventory(item.name);
-        log(`Gacha: Mendapatkan ${item.name} (${item.rarity})`);
-        alert(`Selamat! Kamu mendapatkan ${item.name} (${item.rarity})`);
-      });
-    }
-    function getRandomGacha(){
-      let r = Math.random()*100;
-      let sum = 0;
-      for(let g of gachas){
-        sum += g.rate;
-        if(r <= sum) return g;
+    function playRoulette() {
+      const bet = getBet("rouletteBet");
+      if (!bet) return alert("Taruhan tidak valid.");
+      const pick = document.getElementById("rouletteColor").value;
