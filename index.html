@@ -1,140 +1,134 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Crash Gambling Simulator</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Crash Simulator</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #0f001a, #190030);
+      background: radial-gradient(circle, #1f0036, #000);
       color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-    h1 {
-      margin-bottom: 10px;
+      text-align: center;
     }
     .container {
-      background-color: #1a0033;
+      max-width: 500px;
+      margin: auto;
       padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 0 20px #6f00ff;
-      text-align: center;
-      width: 300px;
     }
-    input, button {
-      padding: 10px;
-      margin: 10px 0;
-      border: none;
-      border-radius: 10px;
-      font-size: 16px;
-    }
-    input {
-      width: 100%;
-    }
-    button {
-      background-color: #6f00ff;
-      color: white;
-      cursor: pointer;
-    }
-    button:disabled {
-      background-color: #3c005c;
+    .title {
+      font-size: 2em;
+      margin-bottom: 10px;
     }
     .multiplier {
-      font-size: 32px;
+      font-size: 3em;
       margin: 20px 0;
-      animation: pulse 0.5s infinite;
+      transition: transform 0.2s ease-in-out;
     }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
+    .input-group input {
+      padding: 10px;
+      width: 100px;
+      margin: 5px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      background-color: #6a0dad;
+      color: white;
+      border-radius: 5px;
+    }
+    .balance {
+      margin-top: 20px;
+      font-size: 1.2em;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Crash Simulator</h1>
-    <div>Balance: $<span id="balance">1000</span></div>
-    <input type="number" id="bet" placeholder="Enter your bet" min="1" />
-    <button id="start">Start</button>
-    <div class="multiplier" id="multiplier">x1.00</div>
-    <button id="cashout" disabled>Cash Out</button>
-    <div id="result"></div>
-  </div><audio id="tick" src="https://www.soundjay.com/button/beep-07.wav"></audio> <audio id="cash" src="https://www.soundjay.com/button/button-3.wav"></audio> <audio id="crash" src="https://www.soundjay.com/button/beep-10.wav"></audio>
+    <div class="title">Crash Simulator</div>
+    <div id="multiplier" class="multiplier">x1.00</div>
+    <div class="input-group">
+      <input id="betInput" type="number" placeholder="Bet" value="10">
+      <button onclick="startGame()">Main</button>
+      <button onclick="cashOut()">Claim</button>
+    </div>
+    <div class="balance">Balance: <span id="balance">1000</span> Coins</div>
+  </div><audio id="tick" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_06c804ebf1.mp3?filename=tick-tock-clock-1-87235.mp3"></audio> <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2021/11/15/audio_7ba89a388c.mp3?filename=boom-1-97982.mp3"></audio> <audio id="cashSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8ecaf5a3a1.mp3?filename=collect-coin-19474.mp3"></audio>
 
   <script>
-    let balance = 1000;
-    let multiplier = 1.0;
+    let multiplier = 1.00;
     let interval;
+    let isPlaying = false;
     let crashed = false;
-    let crashPoint;
-    let gameStarted = false;
+    let balance = 1000;
+    let bet = 10;
+    let cashoutAt = 0;
 
-    const betInput = document.getElementById('bet');
-    const startBtn = document.getElementById('start');
-    const cashoutBtn = document.getElementById('cashout');
-    const multiplierDisplay = document.getElementById('multiplier');
-    const resultDisplay = document.getElementById('result');
-    const balanceDisplay = document.getElementById('balance');
-    const tickSound = document.getElementById('tick');
-    const cashSound = document.getElementById('cash');
-    const crashSound = document.getElementById('crash');
+    const multiplierEl = document.getElementById("multiplier");
+    const balanceEl = document.getElementById("balance");
+    const betInput = document.getElementById("betInput");
+    const tickSound = document.getElementById("tick");
+    const crashSound = document.getElementById("crashSound");
+    const cashSound = document.getElementById("cashSound");
 
-    startBtn.onclick = () => {
-      const bet = parseFloat(betInput.value);
-      if (isNaN(bet) || bet <= 0 || bet > balance || gameStarted) return;
+    function getRandomCrashPoint() {
+      let r = Math.random();
+      if (r < 0.2) return +(1 + Math.random()).toFixed(2);  // 20% crash cepat
+      if (r < 0.8) return +(1.5 + Math.random() * 1.5).toFixed(2); // 60% tengah
+      return +(3 + Math.random() * 97).toFixed(2); // 20% bisa tinggi
+    }
 
-      gameStarted = true;
-      startBtn.disabled = true;
-      betInput.disabled = true;
-      cashoutBtn.disabled = false;
-      multiplier = 1.0;
+    function startGame() {
+      if (isPlaying) return;
+
+      bet = parseFloat(betInput.value);
+      if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
+
+      isPlaying = true;
       crashed = false;
-      resultDisplay.textContent = '';
-      crashPoint = (Math.random() ** 3.5 * 100).toFixed(2); // Lebih sering crash cepat
+      multiplier = 1.00;
+      crashPoint = getRandomCrashPoint();
+      balance -= bet;
+      updateBalance();
+      betInput.disabled = true;
 
       interval = setInterval(() => {
-        multiplier += 0.05 + multiplier * 0.015;
-        multiplierDisplay.textContent = `x${multiplier.toFixed(2)}`;
+        multiplier = +(multiplier + 0.05).toFixed(2);
+        multiplierEl.innerText = `x${multiplier.toFixed(2)}`;
+        multiplierEl.style.transform = `scale(${1 + multiplier / 10})`;
         tickSound.play();
 
         if (multiplier >= crashPoint) {
           crash();
         }
-      }, 100);
-    };
-
-    cashoutBtn.onclick = () => {
-      if (!gameStarted || crashed) return;
-      const bet = parseFloat(betInput.value);
-      const winnings = bet * multiplier;
-      balance += winnings;
-      balanceDisplay.textContent = balance.toFixed(2);
-      resultDisplay.textContent = `You won $${winnings.toFixed(2)} at x${multiplier.toFixed(2)}`;
-      cashSound.play();
-      endGame();
-    };
-
-    function crash() {
-      crashSound.play();
-      resultDisplay.textContent = `Crashed at x${multiplier.toFixed(2)}! You lost.`;
-      const bet = parseFloat(betInput.value);
-      balance -= bet;
-      balanceDisplay.textContent = balance.toFixed(2);
-      endGame();
+      }, 150);
     }
 
-    function endGame() {
+    function crash() {
       clearInterval(interval);
-      gameStarted = false;
-      startBtn.disabled = false;
+      crashed = true;
+      isPlaying = false;
+      crashSound.play();
+      multiplierEl.innerText = `💥 x${multiplier.toFixed(2)} CRASHED!`;
       betInput.disabled = false;
-      cashoutBtn.disabled = true;
+    }
+
+    function cashOut() {
+      if (!isPlaying || crashed) return;
+      let win = +(bet * multiplier).toFixed(2);
+      balance += win;
+      updateBalance();
+      cashSound.play();
+      clearInterval(interval);
+      isPlaying = false;
+      multiplierEl.innerText = `✅ x${multiplier.toFixed(2)} CLAIMED!`;
+      betInput.disabled = false;
+    }
+
+    function updateBalance() {
+      balanceEl.innerText = balance.toFixed(2);
     }
   </script></body>
 </html>
