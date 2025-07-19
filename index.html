@@ -1,167 +1,180 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Crash Gambling</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mines Simulator</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: radial-gradient(circle at center, #1a002b, #000);
+      background: radial-gradient(circle, #1f0036, #000);
       color: white;
-      text-align: center;
       display: flex;
       flex-direction: column;
-      min-height: 100vh;
-    }
-    .container {
-      margin: auto;
-      padding: 20px;
-      max-width: 500px;
-      border: 2px solid #9b30ff;
-      border-radius: 20px;
-      box-shadow: 0 0 20px #9b30ff;
-      background: rgba(0, 0, 0, 0.4);
-    }
-    .title {
-      font-size: 2.2em;
-      margin-bottom: 15px;
-    }
-    .multiplier {
-      font-size: 3em;
-      margin: 20px 0;
-      transition: transform 0.1s ease-in-out;
-    }
-    .input-group input {
-      padding: 10px;
-      width: 100px;
-      margin: 5px;
-      border-radius: 5px;
-      border: 1px solid #9b30ff;
-      background: #1f0036;
-      color: white;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      cursor: pointer;
-      border: none;
-      background-color: #9b30ff;
-      color: white;
-      border-radius: 5px;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background-color: #bf5fff;
-    }
-    .balance {
-      margin-top: 20px;
-      font-size: 1.2em;
-    }
-    .note {
-      margin-top: auto;
-      padding: 20px;
-      font-size: 0.8em;
-      color: rgba(255, 255, 255, 0.2);
-    }
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }.container {
+  text-align: center;
+  padding: 20px;
+  border: 2px solid #a020f0;
+  border-radius: 20px;
+  box-shadow: 0 0 30px #a020f0;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+.title {
+  font-size: 2em;
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(5, 60px);
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.cell {
+  width: 60px;
+  height: 60px;
+  background-color: #222;
+  border: 2px solid #6a0dad;
+  border-radius: 10px;
+  font-size: 1.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.cell.revealed.safe {
+  background-color: #3a3;
+}
+
+.cell.revealed.bomb {
+  background-color: #a00;
+}
+
+.input-group input {
+  padding: 10px;
+  width: 100px;
+  margin: 5px;
+}
+
+button {
+  padding: 10px 20px;
+  margin: 5px;
+  cursor: pointer;
+  border: none;
+  background-color: #6a0dad;
+  color: white;
+  border-radius: 5px;
+}
+
+.balance, .multiplier {
+  margin-top: 10px;
+  font-size: 1.2em;
+}
+
+.note {
+  margin-top: 30px;
+  font-size: 0.9em;
+  color: rgba(255, 255, 255, 0.3);
+}
+
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="title">Crash Gambling</div>
-    <div id="multiplier" class="multiplier">x1.00</div>
+    <div class="title">Mines Simulator</div>
     <div class="input-group">
-      <input id="betInput" type="number" placeholder="Bet" value="10" />
+      <input id="betInput" type="number" placeholder="Bet" value="10">
       <button onclick="startGame()">Main</button>
-      <button onclick="cashOut()">Claim</button>
+      <button onclick="claim()">Claim</button>
     </div>
     <div class="balance">Balance: <span id="balance">50</span> Coins</div>
-  </div>
-  <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online!</div>
+    <div class="multiplier">Multiplier: <span id="multiplier">x1.00</span></div>
+    <div class="grid" id="grid"></div>
+    <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online.</div>
+  </div>  <script>
+    const grid = document.getElementById("grid");
+    const balanceEl = document.getElementById("balance");
+    const multiplierEl = document.getElementById("multiplier");
+    const betInput = document.getElementById("betInput");
 
-  <audio id="tick" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_06c804ebf1.mp3?filename=tick-tock-clock-1-87235.mp3"></audio>
-  <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2021/11/15/audio_7ba89a388c.mp3?filename=boom-1-97982.mp3"></audio>
-  <audio id="cashSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_8ecaf5a3a1.mp3?filename=collect-coin-19474.mp3"></audio>
-
-  <script>
-    let multiplier = 1.00;
-    let interval;
-    let isPlaying = false;
-    let crashed = false;
     let balance = 50;
     let bet = 10;
-    let crashPoint = 0;
-
-    const multiplierEl = document.getElementById("multiplier");
-    const balanceEl = document.getElementById("balance");
-    const betInput = document.getElementById("betInput");
-    const tickSound = document.getElementById("tick");
-    const crashSound = document.getElementById("crashSound");
-    const cashSound = document.getElementById("cashSound");
-
-    function getRandomCrashPoint() {
-      let r = Math.random();
-      if (r < 0.4) return +(1.0 + Math.random() * 0.8).toFixed(2); // 40% cepat
-      if (r < 0.9) return +(1.5 + Math.random() * 1.5).toFixed(2); // 50% sedang
-      return +(3 + Math.random() * 7).toFixed(2); // 10% tinggi
-    }
+    let playing = false;
+    let cells = [];
+    let bombs = new Set();
+    let revealed = 0;
+    let multiplier = 1;
 
     function startGame() {
-      if (isPlaying) return;
-
+      if (playing) return;
       bet = parseFloat(betInput.value);
-      if (isNaN(bet) || bet <= 0 || bet > balance) {
-        alert("Bet tidak valid");
+      if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
+      balance -= bet;
+      updateUI();
+      grid.innerHTML = "";
+      bombs.clear();
+      revealed = 0;
+      multiplier = 1.00;
+      updateMultiplier();
+      playing = true;
+      generateBombs(5); // 5 bom
+
+      for (let i = 0; i < 25; i++) {
+        const cell = document.createElement("div");
+        cell.className = "cell";
+        cell.addEventListener("click", () => revealCell(i, cell));
+        grid.appendChild(cell);
+        cells[i] = cell;
+      }
+    }
+
+    function generateBombs(count) {
+      while (bombs.size < count) {
+        bombs.add(Math.floor(Math.random() * 25));
+      }
+    }
+
+    function revealCell(index, cell) {
+      if (!playing || cell.classList.contains("revealed")) return;
+
+      if (bombs.has(index)) {
+        cell.classList.add("revealed", "bomb");
+        cell.textContent = "💣";
+        playing = false;
+        alert("Kamu KENA BOM dan kehilangan taruhan!");
         return;
       }
 
-      isPlaying = true;
-      crashed = false;
-      multiplier = 1.00;
-      crashPoint = getRandomCrashPoint();
-      balance -= bet;
-      updateBalance();
-      betInput.disabled = true;
-
-      interval = setInterval(() => {
-        multiplier = +(multiplier + 0.04).toFixed(2);
-        multiplierEl.innerText = `x${multiplier.toFixed(2)}`;
-        multiplierEl.style.transform = `scale(${1 + multiplier / 20})`;
-        tickSound.play();
-
-        if (multiplier >= crashPoint) {
-          crash();
-        }
-      }, 120);
+      cell.classList.add("revealed", "safe");
+      cell.textContent = `x${(multiplier + 0.2).toFixed(2)}`;
+      revealed++;
+      multiplier += 0.2;
+      updateMultiplier();
     }
 
-    function crash() {
-      clearInterval(interval);
-      crashed = true;
-      isPlaying = false;
-      crashSound.play();
-      multiplierEl.innerText = `💥 x${multiplier.toFixed(2)} CRASHED!`;
-      multiplierEl.style.transform = 'scale(1)';
-      betInput.disabled = false;
-    }
-
-    function cashOut() {
-      if (!isPlaying || crashed) return;
+    function claim() {
+      if (!playing || revealed === 0) return;
       let win = +(bet * multiplier).toFixed(2);
       balance += win;
-      updateBalance();
-      cashSound.play();
-      clearInterval(interval);
-      isPlaying = false;
-      multiplierEl.innerText = `✅ x${multiplier.toFixed(2)} CLAIMED!`;
-      multiplierEl.style.transform = 'scale(1)';
-      betInput.disabled = false;
+      updateUI();
+      alert(`Kamu menang ${win} coins!`);
+      playing = false;
     }
 
-    function updateBalance() {
-      balanceEl.innerText = balance.toFixed(2);
+    function updateUI() {
+      balanceEl.textContent = balance.toFixed(2);
     }
-  </script>
-</body>
+
+    function updateMultiplier() {
+      multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
+    }
+  </script></body>
 </html>
