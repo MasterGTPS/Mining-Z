@@ -1,47 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crash Simulator</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Crash Simulator Edu</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #000;
+      background: radial-gradient(circle at center, #1a002b, #000);
       color: white;
       text-align: center;
-    }
-    .neon-border {
-      border: 4px solid #6a0dad;
-      box-shadow: 0 0 20px #6a0dad, 0 0 40px #6a0dad, 0 0 60px #6a0dad;
-      border-radius: 10px;
-      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
     }
     .container {
-      max-width: 500px;
-      margin: 60px auto;
+      margin: auto;
       padding: 20px;
+      max-width: 500px;
+      border: 2px solid #9b30ff;
+      border-radius: 20px;
+      box-shadow: 0 0 20px #9b30ff;
+      background: rgba(0, 0, 0, 0.4);
     }
     .title {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      color: #bb86fc;
-      text-shadow: 0 0 10px #bb86fc;
+      font-size: 2.2em;
+      margin-bottom: 15px;
     }
     .multiplier {
       font-size: 3em;
       margin: 20px 0;
-      transition: transform 0.2s ease-in-out;
-      color: #ffffff;
+      transition: transform 0.1s ease-in-out;
     }
     .input-group input {
       padding: 10px;
       width: 100px;
       margin: 5px;
-      border: none;
       border-radius: 5px;
-      background: #2a003f;
+      border: 1px solid #9b30ff;
+      background: #1f0036;
       color: white;
     }
     button {
@@ -49,32 +47,38 @@
       margin: 5px;
       cursor: pointer;
       border: none;
-      background-color: #6a0dad;
+      background-color: #9b30ff;
       color: white;
       border-radius: 5px;
-      transition: background-color 0.3s;
+      transition: background 0.2s;
     }
     button:hover {
-      background-color: #51009e;
+      background-color: #bf5fff;
     }
     .balance {
       margin-top: 20px;
       font-size: 1.2em;
-      color: #d0aaff;
+    }
+    .note {
+      margin-top: auto;
+      padding: 20px;
+      font-size: 0.8em;
+      color: rgba(255, 255, 255, 0.2);
     }
   </style>
 </head>
 <body>
-  <div class="container neon-border">
+  <div class="container">
     <div class="title">Crash Simulator</div>
     <div id="multiplier" class="multiplier">x1.00</div>
     <div class="input-group">
-      <input id="betInput" type="number" placeholder="Bet" value="10">
+      <input id="betInput" type="number" placeholder="Bet" value="10" />
       <button onclick="startGame()">Main</button>
       <button onclick="cashOut()">Claim</button>
     </div>
-    <div class="balance">Balance: <span id="balance">1000</span> Coins</div>
+    <div class="balance">Balance: <span id="balance">50</span> Coins</div>
   </div>
+  <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online</div>
 
   <audio id="tick" src="https://cdn.pixabay.com/download/audio/2022/03/16/audio_06c804ebf1.mp3?filename=tick-tock-clock-1-87235.mp3"></audio>
   <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2021/11/15/audio_7ba89a388c.mp3?filename=boom-1-97982.mp3"></audio>
@@ -85,7 +89,7 @@
     let interval;
     let isPlaying = false;
     let crashed = false;
-    let balance = 1000;
+    let balance = 50;
     let bet = 10;
     let crashPoint = 0;
 
@@ -98,16 +102,19 @@
 
     function getRandomCrashPoint() {
       let r = Math.random();
-      if (r < 0.4) return +(1 + Math.random()).toFixed(2);  // 40% cepat crash
-      if (r < 0.85) return +(1.5 + Math.random() * 1.5).toFixed(2); // 45% menengah
-      return +(3 + Math.random() * 97).toFixed(2); // 15% tinggi
+      if (r < 0.4) return +(1.0 + Math.random() * 0.8).toFixed(2); // 40% cepat
+      if (r < 0.9) return +(1.5 + Math.random() * 1.5).toFixed(2); // 50% sedang
+      return +(3 + Math.random() * 7).toFixed(2); // 10% tinggi
     }
 
     function startGame() {
       if (isPlaying) return;
 
       bet = parseFloat(betInput.value);
-      if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
+      if (isNaN(bet) || bet <= 0 || bet > balance) {
+        alert("Bet tidak valid");
+        return;
+      }
 
       isPlaying = true;
       crashed = false;
@@ -118,9 +125,9 @@
       betInput.disabled = true;
 
       interval = setInterval(() => {
-        multiplier = +(multiplier + 0.1).toFixed(2);
+        multiplier = +(multiplier + 0.04).toFixed(2);
         multiplierEl.innerText = `x${multiplier.toFixed(2)}`;
-        multiplierEl.style.transform = `scale(${1 + multiplier / 10})`;
+        multiplierEl.style.transform = `scale(${1 + multiplier / 20})`;
         tickSound.play();
 
         if (multiplier >= crashPoint) {
@@ -135,6 +142,7 @@
       isPlaying = false;
       crashSound.play();
       multiplierEl.innerText = `💥 x${multiplier.toFixed(2)} CRASHED!`;
+      multiplierEl.style.transform = 'scale(1)';
       betInput.disabled = false;
     }
 
@@ -147,6 +155,7 @@
       clearInterval(interval);
       isPlaying = false;
       multiplierEl.innerText = `✅ x${multiplier.toFixed(2)} CLAIMED!`;
+      multiplierEl.style.transform = 'scale(1)';
       betInput.disabled = false;
     }
 
