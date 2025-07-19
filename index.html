@@ -1,126 +1,141 @@
-<!DOCTYPE html><html lang="en"><head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Crash Game Simulasi</title>
   <style>
     body {
-      background-color: #0d001a;
-      color: #fff;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1e0033, #330033);
+      color: white;
       text-align: center;
-      padding: 2rem;
-    }h1 {
-  color: #d5aaff;
-  font-size: 2rem;
-}
-
-.container {
-  margin-top: 2rem;
-}
-
-#multiplier {
-  font-size: 3rem;
-  margin: 1rem 0;
-  color: #bada55;
-  transition: transform 0.2s;
-}
-
-input, button {
-  padding: 0.5rem 1rem;
-  margin: 0.5rem;
-  border-radius: 0.5rem;
-  border: none;
-}
-
-button {
-  cursor: pointer;
-  background-color: #7c3aed;
-  color: white;
-  font-weight: bold;
-}
-
-#status {
-  margin-top: 1rem;
-  font-size: 1.2rem;
-}
-
-#balance {
-  margin-bottom: 1rem;
-}
-
+      overflow: hidden;
+    }
+    h1 {
+      margin-top: 20px;
+      font-size: 2.5rem;
+    }
+    .game-container {
+      margin-top: 40px;
+    }
+    .multiplier {
+      font-size: 4rem;
+      margin: 20px 0;
+      animation: pulse 0.5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px;
+      font-size: 1rem;
+      border-radius: 5px;
+      border: none;
+    }
+    #message {
+      font-size: 1.2rem;
+      margin-top: 10px;
+    }
+    button:disabled {
+      background-color: #555;
+      cursor: not-allowed;
+    }
   </style>
-</head><body>
-  <h1>Crash Simulator - No Deposit, Just for Fun</h1>
-  <div id="balance">Saldo: <span id="coins">1000</span> koin</div>  <div class="container">
-    <label for="bet">Masukkan taruhan:</label>
-    <input type="number" id="bet" value="10" min="1">
-    <br>
-    <button onclick="startGame()" id="startBtn">Main</button>
-    <button onclick="claim()" id="claimBtn" disabled>Klaim</button><div id="multiplier">x1.00</div>
-<div id="status"></div>
+</head>
+<body>
+  <h1>CRASH SIMULATOR</h1>
+  <div class="game-container">
+    <div class="multiplier" id="multiplier">x1.00</div>
+    <input type="number" id="betAmount" placeholder="Bet amount" min="1" />
+    <br />
+    <button id="startButton">Main</button>
+    <button id="claimButton" disabled>Claim</button>
+    <div id="message"></div>
+    <div id="balance">Saldo: $1000</div>
+  </div><audio id="tickSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_52ee6d9e3a.mp3?filename=tick-1-180874.mp3"></audio> <audio id="cashoutSound" src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_9e2d8feac5.mp3?filename=money-bag-178256.mp3"></audio> <audio id="crashSound" src="https://cdn.pixabay.com/download/audio/2023/03/01/audio_52e20239a2.mp3?filename=glass-break-140217.mp3"></audio>
 
-  </div>  <script>
-    let coins = 1000;
-    let multiplier = 1;
+  <script>
+    let multiplier = 1.00;
+    let crashPoint;
     let interval;
-    let crashed = false;
-    let crashPoint = Math.random() * 80 + 1; // 1 - 81
+    let isPlaying = false;
+    let balance = 1000;
+    let currentBet = 0;
 
-    function updateCoins() {
-      document.getElementById('coins').innerText = coins.toFixed(0);
+    const multiplierDisplay = document.getElementById('multiplier');
+    const betInput = document.getElementById('betAmount');
+    const startButton = document.getElementById('startButton');
+    const claimButton = document.getElementById('claimButton');
+    const messageDisplay = document.getElementById('message');
+    const balanceDisplay = document.getElementById('balance');
+
+    const tickSound = document.getElementById('tickSound');
+    const cashoutSound = document.getElementById('cashoutSound');
+    const crashSound = document.getElementById('crashSound');
+
+    function resetGame() {
+      clearInterval(interval);
+      multiplier = 1.00;
+      multiplierDisplay.textContent = 'x1.00';
+      isPlaying = false;
+      startButton.disabled = false;
+      betInput.disabled = false;
+      claimButton.disabled = true;
     }
 
     function startGame() {
-      const bet = parseFloat(document.getElementById('bet').value);
-      if (bet > coins || bet <= 0) {
-        alert("Taruhan tidak valid.");
+      currentBet = parseFloat(betInput.value);
+      if (!currentBet || currentBet <= 0 || currentBet > balance) {
+        messageDisplay.textContent = 'Bet tidak valid atau saldo tidak cukup!';
         return;
       }
 
-      crashed = false;
-      multiplier = 1;
-      crashPoint = Math.random() * 100 + 1; // Crash point 1 - 101
-
-      document.getElementById("multiplier").style.color = "#bada55";
-      document.getElementById("status").innerText = "";
-
-      coins -= bet;
-      updateCoins();
-
-      document.getElementById("claimBtn").disabled = false;
-      document.getElementById("startBtn").disabled = true;
+      balance -= currentBet;
+      updateBalance();
+      betInput.disabled = true;
+      startButton.disabled = true;
+      claimButton.disabled = false;
+      messageDisplay.textContent = '';
+      isPlaying = true;
+      crashPoint = (Math.random() ** 2.3) * 100; // Semakin sering crash cepat
 
       interval = setInterval(() => {
-        multiplier += 0.2 + Math.random() * 0.6; // Lebih cepat naiknya
-        document.getElementById("multiplier").innerText = `x${multiplier.toFixed(2)}`;
+        multiplier += 0.1 + multiplier * 0.03;
+        multiplier = Math.round(multiplier * 100) / 100;
+        multiplierDisplay.textContent = `x${multiplier.toFixed(2)}`;
+        tickSound.play();
 
         if (multiplier >= crashPoint) {
           crash();
         }
-      }, 100); // Update lebih cepat tiap 100ms
-    }
-
-    function crash() {
-      clearInterval(interval);
-      crashed = true;
-      document.getElementById("status").innerText = `💥 Crash di x${multiplier.toFixed(2)}`;
-      document.getElementById("multiplier").style.color = "red";
-      document.getElementById("claimBtn").disabled = true;
-      document.getElementById("startBtn").disabled = false;
+      }, 100);
     }
 
     function claim() {
-      if (crashed) return;
-
-      clearInterval(interval);
-      const bet = parseFloat(document.getElementById('bet').value);
-      const reward = bet * multiplier;
-      coins += reward;
-
-      document.getElementById("status").innerText = `🎉 Kamu klaim di x${multiplier.toFixed(2)} dan menang ${reward.toFixed(0)} koin!`;
-      updateCoins();
-
-      document.getElementById("claimBtn").disabled = true;
-      document.getElementById("startBtn").disabled = false;
+      if (!isPlaying) return;
+      const winAmount = Math.round(currentBet * multiplier);
+      balance += winAmount;
+      cashoutSound.play();
+      messageDisplay.textContent = `Kamu menang $${winAmount}`;
+      updateBalance();
+      resetGame();
     }
-  </script></body></html>
+
+    function crash() {
+      crashSound.play();
+      messageDisplay.textContent = `Crash di x${multiplier.toFixed(2)}! Kamu kalah $${currentBet}`;
+      resetGame();
+    }
+
+    function updateBalance() {
+      balanceDisplay.textContent = `Saldo: $${balance}`;
+    }
+
+    startButton.addEventListener('click', startGame);
+    claimButton.addEventListener('click', claim);
+  </script></body>
+</html>
