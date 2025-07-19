@@ -1,7 +1,8 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tower Simulator</title>
   <style>
     body {
@@ -15,6 +16,7 @@
       justify-content: center;
       height: 100vh;
     }
+
     .container {
       text-align: center;
       padding: 20px;
@@ -23,41 +25,55 @@
       box-shadow: 0 0 30px #a020f0;
       background-color: rgba(0, 0, 0, 0.6);
     }
+
     .title {
       font-size: 2em;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
-    .tower {
-      display: flex;
-      flex-direction: column-reverse;
-      gap: 10px;
-      margin: 20px 0;
+
+    .subtitle {
+      font-size: 0.9em;
+      color: #ccc;
+      margin-bottom: 15px;
     }
-    .row {
-      display: flex;
+
+    .grid {
+      display: grid;
+      grid-template-rows: repeat(8, 60px);
+      grid-template-columns: repeat(3, 60px);
       gap: 10px;
       justify-content: center;
+      margin: 20px 0;
     }
+
     .cell {
       width: 60px;
       height: 60px;
       background-color: #222;
       border: 2px solid #6a0dad;
       border-radius: 10px;
+      font-size: 1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       transition: background 0.2s;
     }
-    .cell.correct {
+
+    .cell.safe {
       background-color: #3a3;
     }
-    .cell.wrong {
+
+    .cell.fail {
       background-color: #a00;
     }
-    input {
+
+    .input-group input {
       padding: 10px;
       width: 100px;
       margin: 5px;
     }
+
     button {
       padding: 10px 20px;
       margin: 5px;
@@ -67,13 +83,15 @@
       color: white;
       border-radius: 5px;
     }
+
     .balance, .multiplier {
       margin-top: 10px;
       font-size: 1.2em;
     }
+
     .note {
-      margin-top: 30px;
-      font-size: 0.9em;
+      margin-top: 20px;
+      font-size: 0.8em;
       color: rgba(255, 255, 255, 0.3);
     }
   </style>
@@ -81,15 +99,20 @@
 <body>
   <div class="container">
     <div class="title">Tower Simulator</div>
-    <input id="betInput" type="number" placeholder="Bet" value="10">
-    <button onclick="startTower()">Main</button>
-    <button onclick="claimTower()">Claim</button>
+    <div class="subtitle">Pilih satu kotak dari level paling bawah dan terus naik ke atas! Jangan salah!</div>
+    <div class="input-group">
+      <input id="betInput" type="number" placeholder="Bet" value="10">
+      <button onclick="startGame()">Main</button>
+      <button onclick="claim()">Claim</button>
+    </div>
     <div class="balance">Balance: <span id="balance">50</span> Coins</div>
     <div class="multiplier">Multiplier: <span id="multiplier">x1.00</span></div>
-    <div class="tower" id="tower"></div>
+    <div class="grid" id="grid"></div>
     <div class="note">Website ini dibuat hanya untuk edukasi tentang bahayanya Judi Online.</div>
-  </div>  <script>
-    const tower = document.getElementById("tower");
+  </div>
+
+  <script>
+    const grid = document.getElementById("grid");
     const balanceEl = document.getElementById("balance");
     const multiplierEl = document.getElementById("multiplier");
     const betInput = document.getElementById("betInput");
@@ -97,80 +120,79 @@
     let balance = 50;
     let bet = 10;
     let playing = false;
-    let currentRow = 0;
+    let level = 0;
     let multiplier = 1.00;
-    const maxRows = 8;
-    const cellsPerRow = 3;
-    let correctPath = [];
+    let safePaths = [];
 
-    function startTower() {
+    function startGame() {
       if (playing) return;
+
       bet = parseFloat(betInput.value);
       if (isNaN(bet) || bet <= 0 || bet > balance) return alert("Bet tidak valid");
+
       balance -= bet;
       updateUI();
-      tower.innerHTML = "";
-      correctPath = [];
+      betInput.disabled = true;
+      grid.innerHTML = "";
+      level = 0;
       multiplier = 1.00;
       updateMultiplier();
       playing = true;
-      currentRow = 0;
 
-      for (let i = 0; i < maxRows; i++) {
-        const correctIndex = Math.floor(Math.random() * cellsPerRow);
-        correctPath.push(correctIndex);
+      generateSafePaths();
 
-        const row = document.createElement("div");
-        row.className = "row";
-        for (let j = 0; j < cellsPerRow; j++) {
+      for (let row = 0; row < 8; row++) {
+        for (let col = 0; col < 3; col++) {
           const cell = document.createElement("div");
           cell.className = "cell";
-          if (i === 0) {
-            cell.addEventListener("click", () => pickCell(i, j, cell));
-          }
-          row.appendChild(cell);
+          const cellIndex = row * 3 + col;
+          cell.dataset.row = row;
+          cell.dataset.col = col;
+          cell.addEventListener("click", () => revealCell(row, col, cell));
+          grid.appendChild(cell);
         }
-        tower.appendChild(row);
       }
     }
 
-    function pickCell(row, index, cell) {
-      if (!playing || row !== currentRow) return;
+    function generateSafePaths() {
+      safePaths = [];
+      for (let i = 0; i < 8; i++) {
+        safePaths.push(Math.floor(Math.random() * 3));
+      }
+    }
 
-      const rows = document.querySelectorAll(".row");
-      const currentCells = rows[row].children;
+    function revealCell(row, col, cell) {
+      if (!playing || row !== level) return;
 
-      if (index === correctPath[row]) {
-        cell.classList.add("correct");
-        multiplier += 0.5;
+      if (safePaths[row] === col) {
+        cell.classList.add("safe");
+        cell.textContent = `x${(multiplier + 0.2).toFixed(2)}`;
+        level++;
+        multiplier += 0.2;
         updateMultiplier();
-        currentRow++;
 
-        if (currentRow >= maxRows) {
-          alert("Kamu menyelesaikan menara! Klaim kemenanganmu!");
+        if (level === 8) {
+          alert("Kamu berhasil menyelesaikan menara! Klaim sekarang!");
           playing = false;
-          return;
-        }
-
-        // Enable next row
-        const nextCells = rows[currentRow].children;
-        for (let i = 0; i < nextCells.length; i++) {
-          nextCells[i].addEventListener("click", () => pickCell(currentRow, i, nextCells[i]));
+          betInput.disabled = false;
         }
       } else {
-        cell.classList.add("wrong");
-        alert("Salah pilih! Kamu kehilangan taruhan.");
+        cell.classList.add("fail");
+        cell.textContent = "💥";
+        alert("Salah pilih! Taruhan hilang.");
         playing = false;
+        betInput.disabled = false;
       }
     }
 
-    function claimTower() {
-      if (!playing || currentRow === 0) return;
+    function claim() {
+      if (!playing || level === 0) return;
       let win = +(bet * multiplier).toFixed(2);
       balance += win;
       updateUI();
       alert(`Kamu menang ${win} coins!`);
       playing = false;
+      betInput.disabled = false;
     }
 
     function updateUI() {
@@ -180,5 +202,6 @@
     function updateMultiplier() {
       multiplierEl.textContent = `x${multiplier.toFixed(2)}`;
     }
-  </script></body>
+  </script>
+</body>
 </html>
