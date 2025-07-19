@@ -1,113 +1,126 @@
-<!DOCTYPE html><html lang="id">
-<head>
+<!DOCTYPE html><html lang="en"><head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Crash Simulator - Just for Fun</title>
+  <title>Crash Game Simulasi</title>
   <style>
     body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: white;
+      background-color: #0d001a;
+      color: #fff;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
-    }
-    h1 {
-      background: #4b0082;
-      margin: 0;
-      padding: 20px;
-      color: white;
-    }
-    #saldo {
-      margin: 10px;
-      font-size: 1.2em;
-    }
-    .container {
-      padding: 20px;
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px;
-      border-radius: 8px;
-      border: none;
-      font-size: 1em;
-    }
-    button {
-      background: #800080;
-      color: white;
-      cursor: pointer;
-    }
-    #multiplier {
-      font-size: 3em;
-      margin: 20px 0;
-    }
-    #status {
-      margin-top: 10px;
-    }
+      padding: 2rem;
+    }h1 {
+  color: #d5aaff;
+  font-size: 2rem;
+}
+
+.container {
+  margin-top: 2rem;
+}
+
+#multiplier {
+  font-size: 3rem;
+  margin: 1rem 0;
+  color: #bada55;
+  transition: transform 0.2s;
+}
+
+input, button {
+  padding: 0.5rem 1rem;
+  margin: 0.5rem;
+  border-radius: 0.5rem;
+  border: none;
+}
+
+button {
+  cursor: pointer;
+  background-color: #7c3aed;
+  color: white;
+  font-weight: bold;
+}
+
+#status {
+  margin-top: 1rem;
+  font-size: 1.2rem;
+}
+
+#balance {
+  margin-bottom: 1rem;
+}
+
   </style>
-</head>
-<body>
-  <h1>Crash Simulator - Just for Fun</h1>
-  <div id="saldo">Saldo: 1000 koin</div>
-  <div class="container">
-    <label for="taruhan">Masukkan taruhan:</label><br>
-    <input type="number" id="taruhan" min="1" value="10">
+</head><body>
+  <h1>Crash Simulator - No Deposit, Just for Fun</h1>
+  <div id="balance">Saldo: <span id="coins">1000</span> koin</div>  <div class="container">
+    <label for="bet">Masukkan taruhan:</label>
+    <input type="number" id="bet" value="10" min="1">
     <br>
-    <button onclick="mulaiCrash()">Main</button>
-    <button onclick="klaim()">Klaim</button>
-    <div id="multiplier">x1.00</div>
-    <div id="status"></div>
-  </div>  <script>
-    let saldo = 1000;
-    let multiplier = 1.00;
-    let crashed = false;
-    let gameStarted = false;
-    let interval;
-    let crashPoint;
+    <button onclick="startGame()" id="startBtn">Main</button>
+    <button onclick="claim()" id="claimBtn" disabled>Klaim</button><div id="multiplier">x1.00</div>
+<div id="status"></div>
 
-    function updateSaldo() {
-      document.getElementById('saldo').innerText = `Saldo: ${saldo} koin`;
+  </div>  <script>
+    let coins = 1000;
+    let multiplier = 1;
+    let interval;
+    let crashed = false;
+    let crashPoint = Math.random() * 80 + 1; // 1 - 81
+
+    function updateCoins() {
+      document.getElementById('coins').innerText = coins.toFixed(0);
     }
 
-    function mulaiCrash() {
-      if (gameStarted) return;
-
-      let taruhan = parseInt(document.getElementById('taruhan').value);
-      if (taruhan <= 0 || taruhan > saldo) {
-        alert("Taruhan tidak valid!");
+    function startGame() {
+      const bet = parseFloat(document.getElementById('bet').value);
+      if (bet > coins || bet <= 0) {
+        alert("Taruhan tidak valid.");
         return;
       }
 
-      saldo -= taruhan;
-      updateSaldo();
-      multiplier = 1.00;
       crashed = false;
-      gameStarted = true;
-      crashPoint = Math.random() * 4 + 1; // x1.00 - x5.00
-      document.getElementById("status").innerText = "Crash dimulai...";
+      multiplier = 1;
+      crashPoint = Math.random() * 100 + 1; // Crash point 1 - 101
+
+      document.getElementById("multiplier").style.color = "#bada55";
+      document.getElementById("status").innerText = "";
+
+      coins -= bet;
+      updateCoins();
+
+      document.getElementById("claimBtn").disabled = false;
+      document.getElementById("startBtn").disabled = true;
 
       interval = setInterval(() => {
-        multiplier += 0.01;
+        multiplier += 0.2 + Math.random() * 0.6; // Lebih cepat naiknya
         document.getElementById("multiplier").innerText = `x${multiplier.toFixed(2)}`;
+
         if (multiplier >= crashPoint) {
-          clearInterval(interval);
-          crashed = true;
-          gameStarted = false;
-          document.getElementById("status").innerText = `Crash! x${multiplier.toFixed(2)}`;
+          crash();
         }
-      }, 50);
+      }, 100); // Update lebih cepat tiap 100ms
     }
 
-    function klaim() {
-      if (!gameStarted || crashed) return;
+    function crash() {
       clearInterval(interval);
-      gameStarted = false;
-      let taruhan = parseInt(document.getElementById('taruhan').value);
-      let hasil = Math.floor(taruhan * multiplier);
-      saldo += hasil;
-      updateSaldo();
-      document.getElementById("status").innerText = `Berhasil klaim di x${multiplier.toFixed(2)}. Menang: ${hasil} koin!`;
+      crashed = true;
+      document.getElementById("status").innerText = `💥 Crash di x${multiplier.toFixed(2)}`;
+      document.getElementById("multiplier").style.color = "red";
+      document.getElementById("claimBtn").disabled = true;
+      document.getElementById("startBtn").disabled = false;
     }
 
-    updateSaldo();
-  </script></body>
-</html>
+    function claim() {
+      if (crashed) return;
+
+      clearInterval(interval);
+      const bet = parseFloat(document.getElementById('bet').value);
+      const reward = bet * multiplier;
+      coins += reward;
+
+      document.getElementById("status").innerText = `🎉 Kamu klaim di x${multiplier.toFixed(2)} dan menang ${reward.toFixed(0)} koin!`;
+      updateCoins();
+
+      document.getElementById("claimBtn").disabled = true;
+      document.getElementById("startBtn").disabled = false;
+    }
+  </script></body></html>
